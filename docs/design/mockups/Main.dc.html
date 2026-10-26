@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>ユーザー一覧（スマホ）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.m3{--p:#6750A4;--op:#FFFFFF;--pc:#EADDFF;--opc:#21005D;--sc2:#E8DEF8;--osc2:#1D192B;--tc:#FFD8E4;--otc:#31111D;--s:#FEF7FF;--os:#1D1B20;--osv:#49454F;--ol:#79747E;--olv:#CAC4D0;--cl:#F7F2FA;--c:#F3EDF7;--ch:#ECE6F0;--chh:#E6E0E9}
+.m3.dark{--p:#D0BCFF;--op:#381E72;--pc:#4F378B;--opc:#EADDFF;--sc2:#4A4458;--osc2:#E8DEF8;--tc:#633B48;--otc:#FFD8E4;--s:#141218;--os:#E6E0E9;--osv:#CAC4D0;--ol:#938F99;--olv:#49454F;--cl:#1D1B20;--c:#211F26;--ch:#2B2930;--chh:#36343B}
+a{color:inherit;text-decoration:none}a:hover{color:inherit}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <header style="height: 64px; padding: 0 4px 0 16px; display: flex; align-items: center; gap: 8px; flex-shrink: 0">
+    <h1 style="margin: 0; flex-grow: 1; font-size: 22px; line-height: 28px; font-weight: 400">GitHub Users</h1>
+    <button aria-label="表示設定" style="width: 48px; height: 48px; border: 0; background: transparent; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--osv)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+    </button>
+  </header>
+  <div style="padding: 0 16px 12px; flex-shrink: 0">
+    <label style="height: 56px; border-radius: 28px; background: var(--ch); display: flex; align-items: center; gap: 12px; padding: 0 16px; color: var(--osv)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input type="search" placeholder="ユーザー名で絞り込み" aria-label="ユーザー名で絞り込み" style="flex-grow: 1; border: 0; background: transparent; font: inherit; font-size: 16px; color: var(--os); outline: none; min-width: 0">
+    </label>
+  </div>
+  <ul style="list-style: none; margin: 0; padding: 0; flex-grow: 1; overflow: hidden">
+    <sc-for list="{{users}}" as="u" hint-placeholder-count="9">
+      <li>
+        <a href="PhoneDetail.dc.html" style="height: 72px; display: flex; align-items: center; gap: 16px; padding: 0 16px; color: var(--os)">
+          <div style="{{u.avatarStyle}}">{{u.initial}}</div>
+          <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 16px; line-height: 24px; font-weight: 500">{{u.login}}</span>
+            <span style="font-size: 14px; line-height: 20px; color: var(--osv)">ID {{u.id}} · User</span>
+          </div>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><path d="M9 6l6 6-6 6"></path></svg>
+        </a>
+      </li>
+    </sc-for>
+  </ul>
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--osv); font-size: 14px; border-top: 1px solid var(--olv)">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="var(--sc2)" stroke-width="3"></circle><path d="M12 3a9 9 0 0 1 9 9" stroke="var(--p)" stroke-width="3" stroke-linecap="round"></path></svg>
+    <span>さらに読み込み中…</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var tones = [['--pc', '--opc'], ['--sc2', '--osc2'], ['--tc', '--otc']];
+    var raw = [['mojombo', 1], ['defunkt', 2], ['pjhyett', 3], ['wycats', 4], ['ezmobius', 5], ['ivey', 6], ['evanphx', 7], ['vanpelt', 17], ['wayneeseguin', 18], ['brynary', 19]];
+    var users = raw.map(function (r, i) {
+      var t = tones[i % 3];
+      return {
+        login: r[0],
+        id: r[1],
+        initial: r[0].charAt(0).toUpperCase(),
+        avatarStyle: 'width: 48px; height: 48px; border-radius: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 500; background: var(' + t[0] + '); color: var(' + t[1] + ')'
+      };
+    });
+    var L = '--p:#6750A4;--op:#FFFFFF;--pc:#EADDFF;--opc:#21005D;--sc2:#E8DEF8;--osc2:#1D192B;--tc:#FFD8E4;--otc:#31111D;--s:#FEF7FF;--os:#1D1B20;--osv:#49454F;--ol:#79747E;--olv:#CAC4D0;--cl:#F7F2FA;--c:#F3EDF7;--ch:#ECE6F0;--chh:#E6E0E9;';
+    var D = '--p:#D0BCFF;--op:#381E72;--pc:#4F378B;--opc:#EADDFF;--sc2:#4A4458;--osc2:#E8DEF8;--tc:#633B48;--otc:#FFD8E4;--s:#141218;--os:#E6E0E9;--osv:#CAC4D0;--ol:#938F99;--olv:#49454F;--cl:#1D1B20;--c:#211F26;--ch:#2B2930;--chh:#36343B;';
+    var rootStyle = (this.props.dark ? D : L) + ' width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--s); color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif; overflow: hidden';
+    return { users: users, rootStyle: rootStyle };
+  }
+}
+</script>
+</body>
+</html>

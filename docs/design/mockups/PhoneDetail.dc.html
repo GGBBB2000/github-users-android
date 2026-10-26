@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>ユーザー詳細（スマホ）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <header style="height: 64px; padding: 0 4px; display: flex; align-items: center; gap: 4px; flex-shrink: 0">
+    <a href="Main.dc.html" aria-label="戻る" style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--os)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="M11 6l-6 6 6 6"></path></svg>
+    </a>
+    <h1 style="margin: 0; flex-grow: 1; font-size: 22px; line-height: 28px; font-weight: 400">mojombo</h1>
+    <a href="#" aria-label="GitHub で開く" style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--osv)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"></path><path d="M20 4l-9 9"></path><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg>
+    </a>
+    <button aria-label="共有" style="width: 48px; height: 48px; border: 0; background: transparent; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--osv)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg>
+    </button>
+  </header>
+
+  <section aria-label="プロフィール" style="margin: 8px 16px 0; border-radius: 24px; background: var(--c); overflow: hidden">
+    <div style="padding: 20px 20px 16px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: center; gap: 16px">
+        <div role="img" aria-label="mojombo のアバター" style="width: 72px; height: 72px; border-radius: 36px; flex-shrink: 0; background: var(--pc); color: var(--opc); display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 500">M</div>
+        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+          <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 400">Tom Preston-Werner</h2>
+          <p style="margin: 0; font-size: 16px; line-height: 24px; color: var(--osv)">@mojombo</p>
+        </div>
+        <span style="height: 28px; padding: 0 10px; border-radius: 8px; background: var(--sc2); color: var(--osc2); font-size: 12px; font-weight: 500; display: flex; align-items: center; flex-shrink: 0">User</span>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 20px">[bio：自己紹介テキスト。未設定ならこの行は非表示]</p>
+      <div aria-label="統計" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 16px; border-top: 1px solid var(--olv)">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px"><span style="font-size: 20px; line-height: 28px; font-weight: 500">24.1k</span><span style="font-size: 12px; line-height: 16px; color: var(--osv)">フォロワー</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px"><span style="font-size: 20px; line-height: 28px; font-weight: 500">11</span><span style="font-size: 12px; line-height: 16px; color: var(--osv)">フォロー中</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px"><span style="font-size: 20px; line-height: 28px; font-weight: 500">66</span><span style="font-size: 12px; line-height: 16px; color: var(--osv)">リポジトリ</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px"><span style="font-size: 20px; line-height: 28px; font-weight: 500">62</span><span style="font-size: 12px; line-height: 16px; color: var(--osv)">Gist</span></div>
+      </div>
+    </div>
+
+    <sc-if value="{{expanded}}" hint-placeholder-val="{{ false }}">
+      <ul style="list-style: none; margin: 0 12px; padding: 0; border-radius: 16px; background: var(--s); overflow: hidden">
+        <li style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 16px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><rect x="4" y="3" width="16" height="18" rx="1"></rect><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"></path></svg>
+          <div style="display: flex; flex-direction: column"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">所属</span><span style="font-size: 16px; line-height: 24px">[company]</span></div>
+        </li>
+        <li style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-top: 1px solid var(--chh)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg>
+          <div style="display: flex; flex-direction: column"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">場所</span><span style="font-size: 16px; line-height: 24px">San Francisco</span></div>
+        </li>
+        <li style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-top: 1px solid var(--chh)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1"></path><path d="M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"></path></svg>
+          <div style="display: flex; flex-direction: column"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">ウェブサイト</span><a href="#" style="font-size: 16px; line-height: 24px; color: var(--p)">tom.preston-werner.com</a></div>
+        </li>
+        <li style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-top: 1px solid var(--chh)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+          <div style="display: flex; flex-direction: column"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">メール</span><span style="font-size: 16px; line-height: 24px; color: var(--osv)">非公開</span></div>
+        </li>
+        <li style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-top: 1px solid var(--chh)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><circle cx="12" cy="12" r="4"></circle><path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.5 7.1"></path></svg>
+          <div style="display: flex; flex-direction: column"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">X (Twitter)</span><span style="font-size: 16px; line-height: 24px">[twitter_username]</span></div>
+        </li>
+      </ul>
+    </sc-if>
+
+    <button aria-expanded="{{expandedText}}" onClick="{{toggle}}" style="width: 100%; height: 48px; margin-top: 4px; border: 0; background: transparent; color: var(--p); font: inherit; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+      <span>{{toggleLabel}}</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{chevronStyle}}"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+  </section>
+
+  <section style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 8px">
+    <h3 style="margin: 0; padding: 0 0 4px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p)">アクティビティ</h3>
+    <ul style="list-style: none; margin: 0; padding: 0; border-radius: 16px; background: var(--cl); overflow: hidden">
+      <li style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 16px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+        <div style="display: flex; flex-direction: column"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">GitHub 登録日</span><span style="font-size: 16px; line-height: 24px">2007年10月20日（19年前）</span></div>
+      </li>
+      <li style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-top: 1px solid var(--chh)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path></svg>
+        <div style="display: flex; flex-direction: column"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">最終更新</span><span style="font-size: 16px; line-height: 24px">[updated_at の相対表示]</span></div>
+      </li>
+    </ul>
+  </section>
+
+  <section style="padding: 24px 0 0; display: flex; flex-direction: column; gap: 8px">
+    <h3 style="margin: 0; padding: 0 16px 4px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p)">人気なリポジトリ</h3>
+    <div style="display: flex; gap: 12px; padding: 0 16px; overflow: hidden">
+      <sc-for list="{{popular}}" as="r" hint-placeholder-count="3">
+        <a href="#" style="width: 248px; flex-shrink: 0; box-sizing: border-box; border-radius: 16px; background: var(--c); padding: 16px; display: flex; flex-direction: column; gap: 8px; color: var(--os); text-decoration: none">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--osv)"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"></path><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"></path></svg>
+            <span style="font-size: 16px; line-height: 24px; font-weight: 500; color: var(--p)">{{r.name}}</span>
+          </div>
+          <span style="font-size: 14px; line-height: 20px; color: var(--osv); height: 40px; overflow: hidden">{{r.desc}}</span>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; line-height: 16px; color: var(--osv)">
+            <span style="display: flex; align-items: center; gap: 4px"><span style="{{r.dotStyle}}"></span>{{r.lang}}</span>
+            <span style="display: flex; align-items: center; gap: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg>{{r.stars}}</span>
+            <span style="display: flex; align-items: center; gap: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="5" r="2"></circle><circle cx="18" cy="5" r="2"></circle><circle cx="12" cy="19" r="2"></circle><path d="M6 7v2a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7M12 12v5"></path></svg>{{r.forks}}</span>
+          </div>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="padding: 24px 0 0; display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; align-items: center; padding: 0 16px 4px">
+      <h3 style="margin: 0; flex-grow: 1; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p)">リポジトリ一覧</h3>
+      <span style="font-size: 12px; line-height: 16px; color: var(--osv)">66 件</span>
+    </div>
+    <div role="group" aria-label="並び替え" style="display: flex; gap: 8px; padding: 0 16px 4px">
+      <button aria-pressed="true" style="height: 32px; padding: 0 16px 0 8px; border: 0; border-radius: 8px; background: var(--sc2); color: var(--osc2); font: inherit; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>更新順</button>
+      <button aria-pressed="false" style="height: 32px; padding: 0 16px; border: 1px solid var(--ol); border-radius: 8px; background: transparent; color: var(--osv); font: inherit; font-size: 14px; font-weight: 500">スター順</button>
+      <button aria-pressed="false" style="height: 32px; padding: 0 16px; border: 1px solid var(--ol); border-radius: 8px; background: transparent; color: var(--osv); font: inherit; font-size: 14px; font-weight: 500">名前順</button>
+    </div>
+    <ul style="list-style: none; margin: 0; padding: 0">
+      <sc-for list="{{repos}}" as="r" hint-placeholder-count="6">
+        <li style="{{r.rowStyle}}">
+          <a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; color: var(--os); text-decoration: none">
+            <span style="font-size: 16px; line-height: 24px; font-weight: 500">{{r.name}}</span>
+            <span style="font-size: 14px; line-height: 20px; color: var(--osv)">{{r.desc}}</span>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; line-height: 16px; color: var(--osv); margin-top: 4px">
+              <span style="display: flex; align-items: center; gap: 4px"><span style="{{r.dotStyle}}"></span>{{r.lang}}</span>
+              <span style="display: flex; align-items: center; gap: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg>{{r.stars}}</span>
+              <span>更新 {{r.updated}}</span>
+            </div>
+          </a>
+        </li>
+      </sc-for>
+    </ul>
+    <div style="padding: 4px 16px 24px; display: flex; justify-content: center">
+      <button style="height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: transparent; color: var(--p); font: inherit; font-size: 14px; font-weight: 500">さらに表示</button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"expanded":{"editor":"boolean","default":false},"$preview":{"width":390,"height":1880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var expanded = (this.state && this.state.expanded != null) ? this.state.expanded : (this.props.expanded ?? false);
+    var dot = 'width: 10px; height: 10px; border-radius: 5px; display: inline-block; background: #701516';
+    var popular = [
+      { name: 'chronic', desc: 'Chronic is a pure Ruby natural language date parser.', lang: 'Ruby', stars: '3.2k', forks: '450' },
+      { name: 'god', desc: 'Ruby process monitor', lang: 'Ruby', stars: '2.2k', forks: '530' },
+      { name: 'grit', desc: 'Grit gives you object oriented read/write access to Git repositories via Ruby.', lang: 'Ruby', stars: '1.9k', forks: '520' }
+    ].map(function (r) { r.dotStyle = dot; return r; });
+    var repos = [
+      { name: 'grit', desc: 'Grit gives you object oriented read/write access to Git repositories via Ruby.', lang: 'Ruby', stars: '1.9k', updated: '[相対日時]' },
+      { name: 'chronic', desc: 'Chronic is a pure Ruby natural language date parser.', lang: 'Ruby', stars: '3.2k', updated: '[相対日時]' },
+      { name: 'god', desc: 'Ruby process monitor', lang: 'Ruby', stars: '2.2k', updated: '[相対日時]' },
+      { name: 'tomdoc', desc: 'A flexible code documentation specification with human readers in mind.', lang: 'Ruby', stars: '[n]', updated: '[相対日時]' },
+      { name: 'clippy', desc: 'Clippy is a very simple Flash widget that makes it possible to place arbitrary text onto the client’s clipboard.', lang: 'ActionScript', stars: '[n]', updated: '[相対日時]' },
+      { name: 'proxymachine', desc: 'A simple TCP routing proxy built on EventMachine.', lang: 'Ruby', stars: '[n]', updated: '[相対日時]' }
+    ].map(function (r, i) {
+      r.dotStyle = r.lang === 'Ruby' ? dot : 'width: 10px; height: 10px; border-radius: 5px; display: inline-block; background: #882B0F';
+      r.rowStyle = i === 0 ? '' : 'border-top: 1px solid var(--chh)';
+      return r;
+    });
+    var L = '--p:#6750A4;--op:#FFFFFF;--pc:#EADDFF;--opc:#21005D;--sc2:#E8DEF8;--osc2:#1D192B;--tc:#FFD8E4;--otc:#31111D;--s:#FEF7FF;--os:#1D1B20;--osv:#49454F;--ol:#79747E;--olv:#CAC4D0;--cl:#F7F2FA;--c:#F3EDF7;--ch:#ECE6F0;--chh:#E6E0E9;';
+    var D = '--p:#D0BCFF;--op:#381E72;--pc:#4F378B;--opc:#EADDFF;--sc2:#4A4458;--osc2:#E8DEF8;--tc:#633B48;--otc:#FFD8E4;--s:#141218;--os:#E6E0E9;--osv:#CAC4D0;--ol:#938F99;--olv:#49454F;--cl:#1D1B20;--c:#211F26;--ch:#2B2930;--chh:#36343B;';
+    var rootStyle = (this.props.dark ? D : L) + ' width: 390px; height: 1880px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--s); color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif; overflow: hidden';
+    return {
+      popular: popular,
+      repos: repos,
+      rootStyle: rootStyle,
+      expanded: expanded,
+      expandedText: expanded ? 'true' : 'false',
+      toggleLabel: expanded ? 'プロフィールの詳細を閉じる' : 'プロフィールの詳細',
+      chevronStyle: expanded ? 'transform: rotate(180deg)' : '',
+      toggle: function () { self.setState({ expanded: !expanded }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
