@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>草の状態パターン</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <sc-for list="{{panels}}" as="p" hint-placeholder-count="6">
+    <section aria-label="{{p.title}}" style="width: 390px; flex-shrink: 0; box-sizing: border-box; padding: 16px; border-radius: 16px; background: var(--s); display: flex; flex-direction: column; gap: 8px">
+      <h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p)">アクティビティ ・ {{p.title}}</h3>
+      <dc-import name="Contribution" layout="phone" state="{{p.state}}" dark="{{dark}}" hint-size="358px,207px"></dc-import>
+    </section>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":2580,"height":280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var dark = !!this.props.dark;
+    var panels = [
+      ['data', '草あり'],
+      ['selected', '日を選択中'],
+      ['empty', '0 件'],
+      ['loading', '読み込み中'],
+      ['signedOut', '未ログイン'],
+      ['error', '取得に失敗']
+    ].map(function (x) { return { state: x[0], title: x[1] }; });
+    var L = '--p:#6750A4;--s:#FEF7FF;--os:#1D1B20;';
+    var D = '--p:#D0BCFF;--s:#141218;--os:#E6E0E9;';
+    return {
+      dark: dark,
+      panels: panels,
+      rootStyle: (dark ? D : L) + ' width: 2580px; height: 280px; display: flex; gap: 48px; align-items: flex-start; color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif'
+    };
+  }
+}
+</script>
+</body>
+</html>

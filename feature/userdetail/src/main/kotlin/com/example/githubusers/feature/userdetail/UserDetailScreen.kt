@@ -42,6 +42,7 @@ fun UserDetailScreen(
         onSortChange = viewModel::onSortChange,
         onLoadMoreRepos = viewModel::loadMoreRepos,
         onRetryRepos = viewModel::retryRepos,
+        onRetryContributions = viewModel::retryContributions,
         onOpenUrl = externalActions::openUrl,
         onShare = externalActions::shareText,
     )
@@ -64,6 +65,7 @@ internal data class UserDetailCallbacks(
     val onSortChange: (RepoSort) -> Unit,
     val onLoadMoreRepos: () -> Unit,
     val onRetryRepos: () -> Unit,
+    val onRetryContributions: () -> Unit,
     val onOpenUrl: (String) -> Unit,
     val onShare: (text: String, title: String) -> Unit,
 ) {

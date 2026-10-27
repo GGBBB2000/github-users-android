@@ -134,6 +134,12 @@ private fun LazyListScope.compactContent(
                 InfoDivider()
                 UpdatedRow(user)
             }
+            ContributionSection(
+                state = uiState.contributions,
+                isTablet = false,
+                onSignIn = callbacks.onSignIn,
+                onRetry = callbacks.onRetryContributions,
+            )
         }
     }
     val popular = uiState.popularRepos

@@ -64,7 +64,78 @@ API：`GET /users/{login}`、`GET /users/{login}/repos`
 セクション見出し（labelLarge、primary 色）＋リスト。
 - GitHub 登録日：`created_at` を「2007年10月20日（19年前）」の形式で表示
 - 最終更新：`updated_at` を相対表示
-- （改善案）草：GitHub の草は GraphQL API（認証必須）でしか取れない。認証なしでは Events API（直近90日、最大300件）でヒートマップを作る案がある。どちらにするかは未決定
+- 草（コントリビューションのカレンダー）：リストの下に置く。詳細は次の項目
+
+### 草（コントリビューションのカレンダー）
+
+過去1年間（GitHub のプロフィールと同じ）だけを表示する。年の切り替えはしない。
+データは GraphQL API の `user(login) { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { date weekday contributionCount contributionLevel } } months { name firstDay totalWeeks } } } }`。**サインインが必要**。
+
+#### 置き場所
+- スマホ：「アクティビティ」のリストの下、間隔 8dp。カードの背景は `surfaceContainerLow`（リストと同じ）、角丸16dp、内側の余白16dp
+- タブレット：「プロフィール／アクティビティ」の2列のグリッドの下に、**全幅の行**として置く（間隔 24dp）。カードの背景は `surface`（ペイン内の他のカードと同じ）
+- 横向きのスマホなど、詳細ペインが狭いときは、下の「マスの大きさ」のルールで自動的に横スクロールになる
+
+#### カードの中身（上から、間隔 12dp）
+1. 見出しの行（高さ 20dp）：左に「過去1年間のコントリビューション」（titleSmall、onSurface）、右端に「1,234 件」（titleSmall、primary）。件数は `totalContributions` を3桁区切りで表示
+2. 草：左に曜日のラベルの列（幅 20dp）、右にマスの領域
+   - 月のラベル：マスの上の行（高さ 16dp、マスとの間隔 4dp）。labelSmall（11sp）、onSurfaceVariant、「11月」の形式。`months[]` の `firstDay` を含む週の列の左端に置く。次のラベルまで3列未満なら省く（左端の、途中から始まる月が重ならないように）
+   - 曜日のラベル：GitHub と同じく **月・水・金** だけ。labelSmall、onSurfaceVariant、その行のマスの中央にそろえる
+   - 行は `weekday`（0=日曜を一番上）。最初と最後の週は7日に満たないので、ない日のマスは描かない
+3. 下の行（高さ 16dp 以上）：左に「選択中の日」の表示、右に凡例
+   - 選択中の日：未選択なら「マスをタップすると件数を表示」（bodySmall、onSurfaceVariant）。選択中は「2026/9/17（木）  24 件」（bodySmall、onSurface、Medium）
+   - 凡例：「少ない ■■■■■ 多い」。文字は labelSmall、マスは草と同じ大きさ。TalkBack では「凡例：色が濃いほど件数が多い」と読む
+
+#### マスの大きさ（レイアウト）
+`BoxWithConstraints` で、マスの領域の幅 W（カードの内側の幅 − 曜日の列 20dp）から決める。
+- 1列あたりの幅 `p = floor(W / 53)` が **13dp 以上**なら全体表示：マス `min(p − 3, 13)`dp、間隔 3dp。左寄せ
+- 13dp 未満なら**横スクロール**：マス 11dp、間隔 3dp（1列 14dp、全体 約 740dp）。最初は**右端（最近の週）**を表示する（`rememberScrollState()` を `scrollTo(maxValue)`、または `LazyRow` の `reverseLayout`）
+  - 曜日のラベルの列はスクロールしない（固定）。月のラベルはマスと一緒にスクロールする
+  - 左にスクロールできるときは、左端に幅 24dp のフェード（カードの背景色 → 透明）を重ねて、続きがあることを示す
+- 目安：スマホ縦（幅 360〜412dp）は横スクロール（1画面に約 21〜25 週）。タブレットの詳細ペイン（モックアップでは W = 692dp）は p = 13 で全体表示（マス 10dp）
+- 角丸はマス 2dp
+- 文字は sp なので、文字を大きくすると月のラベルの行が高くなる。マスは dp のまま
+
+#### 色（5段階）
+濃さは API の `contributionLevel` をそのまま使う（アプリで四分位を計算しない）。色はすべて `MaterialTheme.colorScheme` から作る。GitHub の緑は使わない。
+
+| `contributionLevel` | 色 |
+|---|---|
+| `NONE` | `surfaceContainerHighest` |
+| `FIRST_QUARTILE` | `primary.copy(alpha = 0.30f).compositeOver(カードの背景)` |
+| `SECOND_QUARTILE` | `primary.copy(alpha = 0.52f).compositeOver(カードの背景)` |
+| `THIRD_QUARTILE` | `primary.copy(alpha = 0.76f).compositeOver(カードの背景)` |
+| `FOURTH_QUARTILE` | `primary` |
+
+- 不透明度を掛けた色は、カードの背景に重ねて**不透明な色にしてから**描く（重なりやスクロールのフェードで色が変わらないように）
+- ロールの組み合わせ（`primaryContainer` など）にしない理由：ライトとダークで明るさの順番が逆になるロールがあり、「濃い＝多い」が保てないため。`primary` の不透明度なら、どちらのテーマでも背景から離れるほど多い、になる
+- ダイナミックカラーでも同じ式で作れる
+
+#### 日ごとの件数の確認（操作）
+- **タップで日を選ぶ**。マス1つずつをタップの対象にはしない（48dp を満たせないため）。草の領域全体で `pointerInput` の `detectTapGestures` を受け、指の位置から列と行を計算して、最も近いマスの日を選ぶ
+- 選んだマスは、外側に 2dp の枠（`onSurface`）を描く。下の行の「選択中の日」が切り替わる
+- 同じマスをもう一度タップすると選択を外す。選択は `rememberSaveable` で保持し、別のユーザーを開いたら外す
+- 吹き出し（ツールチップ）は使わない：指でマスが隠れるのと、横スクロールの領域では位置がずれやすいため。長押しやドラッグでの連続選択もしない（横スクロールの操作とぶつかるため）
+
+#### 状態ごとの表示
+
+| 状態 | 表示 |
+|---|---|
+| 読み込み中 | カードの形はそのまま（高さが変わらないように）。見出しの文字は2本のバー（`surfaceContainerHighest`、高さ 14dp、角丸7dp）、マスはすべて `surfaceContainerHighest`、月と曜日のラベルと凡例は出さない |
+| 未ログイン | 同じカードの中に：40dp の丸（`primaryContainer`）に草のアイコン、「コントリビューションのカレンダー」（titleSmall）、「サインインすると、コントリビューションのカレンダーを表示できます」（bodyMedium、onSurfaceVariant）、FilledTonalButton「GitHub にサインイン」（既存のサインイン画面を開く）。スマホは縦に並べてボタンを右寄せ、タブレットは横1行 |
+| 取得に失敗 | カードの中に1行：エラーのアイコン（`error`、24dp）、「コントリビューションを読み込めませんでした」（bodyMedium）、TextButton「再試行」。画面全体のエラーにはしない |
+| 0 件 | 空のカレンダー（すべて `NONE`）を出し、見出しは「0 件」、下の行は「過去1年間のコントリビューションはありません」。凡例とタップは出さない |
+| Organization / Bot | セクションごと出さない（API が返さないため） |
+| サインインの設定がない（Client ID が空） | セクションごと出さない |
+
+- 取得中に 401 が返ったら、既存のルールどおり自動でサインアウトし、「未ログイン」の表示に変わる
+- サインインに成功したら、開いている詳細の草を読み込み直す
+
+#### アクセシビリティ
+- 草全体（月・曜日のラベルとマス）を1つの要素にする（`Modifier.clearAndSetSemantics`）。読み上げは要約：「過去1年間のコントリビューション 1,269 件。最も多い日は 2026年9月17日の 24 件」
+- TalkBack ではタップの位置を指定できないので、`customActions` で選択を動かす：「前の日」「次の日」「前の週」「次の週」。最初の操作では最新の日を選ぶ
+- 「選択中の日」の行は `liveRegion = LiveRegionMode.Polite`。読み上げは「2026年9月17日 木曜日 24 件」（画面の表示より長い形）
+- 選んだ日は色だけでなく枠でも示す（色覚に頼らない）
 
 ### 人気なリポジトリ
 - スマホは横スクロールのカード（LazyRow、幅248dp）、タブレットは3列のグリッド
@@ -159,7 +230,7 @@ GitHub の Device Flow でサインインする。
 
 ## 余白と形状のまとめ
 - 画面の左右の余白：スマホ 16dp、タブレット 24dp。ペインの間隔は 24dp
-- 角丸：ダイアログ 28dp、カードとペイン 24dp、内側のリスト・コード欄 16dp、チップとラベル 8dp、メニュー・Snackbar 4dp、ボタンと検索欄は全丸（pill）
+- 角丸：ダイアログ 28dp、カードとペイン 24dp、内側のリスト・コード欄・草のカード 16dp、チップとラベル 8dp、メニュー・Snackbar 4dp、草のマス 2dp、ボタンと検索欄は全丸（pill）
 - タップできる要素は 48dp 以上
 
 ## モックアップの一覧（`mockups/`）
@@ -169,13 +240,16 @@ GitHub の Device Flow でサインインする。
 | ファイル | 内容 | 本体 |
 |---|---|---|
 | `Main.dc.html` | スマホ / ユーザー一覧（`overlay` でメニュー・ダイアログ・Snackbar を重ねる） | — |
-| `PhoneDetail.dc.html` | スマホ / 詳細（プロフィール折りたたみ） | — |
+| `PhoneDetail.dc.html` | スマホ / 詳細（プロフィール折りたたみ。`contrib` で草の状態を切り替え） | — |
 | `PhoneDetailExpanded.dc.html` | スマホ / 詳細（プロフィール展開） | PhoneDetail |
-| `TabletListDetail.dc.html` | タブレット / リスト＋詳細（`selected=false` で未選択） | — |
+| `TabletListDetail.dc.html` | タブレット / リスト＋詳細（`selected=false` で未選択、`contrib` で草の状態を切り替え） | — |
 | `TabletEmpty.dc.html` | タブレット / 未選択 | TabletListDetail |
 | `DarkMain.dc.html` ほか `Dark*.dc.html` | 上記のダーク版 | 各本体 |
 | `States.dc.html` | 状態パターン（初回読み込み・エラー・追加読み込み失敗・初回のレート制限） | — |
-| `SignIn.dc.html` | サインイン / 許可待ち（`state`、`layout=screen|dialog`、`dark`） | — |
+| `Contribution.dc.html` | 草の部品（`state`：data／selected／empty／loading／signedOut／error／hidden、`layout`：phone／tablet、`dark`）。詳細の画面はこれを読み込む | — |
+| `ContributionStates.dc.html` | 草の状態の一覧（スマホ幅） | Contribution |
+| `DarkContributionStates.dc.html` | 上記のダーク版 | ContributionStates |
+| `SignIn.dc.html` | サインイン / 許可待ち（`state`、`layout`：screen／dialog、`dark`） | — |
 | `SignInLoading` / `SignInExpired` / `SignInDenied` / `SignInError` / `SignInDark.dc.html` | サインインの各状態 | SignIn |
 | `SignInTablet.dc.html` | サインイン / ダイアログ（600dp 以上） | SignIn |
 | `AccountMenu.dc.html` | メニュー（未ログイン / ログイン中）、サインイン成功の Snackbar | Main |

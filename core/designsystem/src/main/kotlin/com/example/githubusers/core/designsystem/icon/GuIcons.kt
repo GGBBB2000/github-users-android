@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.ForkRight
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.LocationOn
@@ -52,6 +53,7 @@ object GuIcons {
     val SignOut: ImageVector = Icons.AutoMirrored.Outlined.Logout
     val Copy: ImageVector = Icons.Outlined.ContentCopy
     val Lock: ImageVector = Icons.Outlined.Lock
+    val Contributions: ImageVector = Icons.Outlined.GridView
     val Refresh: ImageVector = Icons.Outlined.Refresh
     val Check: ImageVector = Icons.Outlined.Check
     val Company: ImageVector = Icons.Outlined.Business

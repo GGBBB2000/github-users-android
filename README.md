@@ -24,9 +24,12 @@ Kotlin・Jetpack Compose・Material 3 で作り、スマホでは1ペイン、�
 
 - プロフィール（名前、自己紹介、フォロワー数などの統計、所属・場所・ウェブサイト・メール・X）
 - アクティビティ（GitHub に登録した日、最終更新）
+- 草（過去1年間のコントリビューションのカレンダー）。マスをタップすると、その日の件数を表示します。サインインが必要です（下の「サインイン」を参照）
 - 人気なリポジトリ（スター数の多い上位3件）
 - リポジトリ一覧（更新順・スター順・名前順で並び替え、「さらに表示」で続きを表示）
 - GitHub のページを Custom Tabs で開く、プロフィールの URL を共有する
+
+<img src="docs/screenshots/phone_contributions.png" width="240" alt="草（コントリビューションのカレンダー）">
 
 ### 画面の大きさとテーマ
 
@@ -49,7 +52,8 @@ Kotlin・Jetpack Compose・Material 3 で作り、スマホでは1ペイン、�
 <img src="docs/screenshots/tablet_signin.png" width="732" alt="タブレットのサインインのダイアログ">
 
 認証なしの GitHub API は 1 時間に 60 回までしか呼べません。サインインすると、上限が 1 時間 5,000 回に増えます。
-サインインしなくても、すべての機能を使えます。
+また、草は GraphQL API でしか取れず、GraphQL API はサインインが必要なので、サインインすると草も表示されます。
+サインインしなくても、草以外のすべての機能を使えます（草の場所には、サインインを勧めるカードを出します）。
 
 - GitHub App の [Device Flow](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app#using-the-device-flow-to-generate-a-user-access-token) を使います。アプリが表示するコードを、GitHub のページで入力して許可します
   - アプリはパスワードを扱わず、`client_secret` も持ちません
@@ -66,7 +70,7 @@ Kotlin・Jetpack Compose・Material 3 で作り、スマホでは1ペイン、�
 | 言語・UI | Kotlin、Jetpack Compose、Material 3、material3-adaptive |
 | 画面遷移 | Navigation 3（`NavDisplay`、`ListDetailSceneStrategy`、`DialogSceneStrategy`） |
 | DI | Hilt（ViewModel の引数は assisted injection） |
-| 通信 | Retrofit、OkHttp（HTTP キャッシュ）、kotlinx.serialization |
+| 通信 | Retrofit、OkHttp（HTTP キャッシュ）、kotlinx.serialization。草だけ GraphQL API |
 | 画像 | Coil 3 |
 | 保存 | DataStore、Tink（`datastore-tink`） |
 | ブラウザ | androidx.browser（Custom Tabs） |
@@ -102,6 +106,7 @@ app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
 - **キャッシュ**：OkHttp の HTTP キャッシュだけを使います。GitHub は `ETag` を返し、304 の応答はレート制限の回数に数えられないので、回数を節約できます
 - **追加読み込み**：Paging 3 を使わずに自分で書いています。手元での絞り込みと合わせやすく、テストもしやすいためです
 - **人気なリポジトリとスター順**：`/users/{login}/repos` はスター順に並べられないので、Search API を使います
+- **草**：GraphQL API の `contributionCalendar` を使います。濃さは GitHub が決めた5段階をそのまま使い、色はテーマの `primary` の不透明度で表します（ライトでもダークでも「濃い＝多い」になるように）。スマホでは横スクロールにして、最初は最近の週を表示します
 - **2ペインでの戻る操作**：初期値の動作では、詳細を表示中に戻るとアプリが閉じてしまうため、詳細を閉じて未選択に戻すようにしています
 - **トークンの更新**：リフレッシュトークンは使うたびに変わるので、同時に複数の通信が 401 になっても、更新は1回にまとめています
 
@@ -130,22 +135,21 @@ GitHub App は、「Enable Device Flow」をオンにし、権限は何も付け
 
 ## テスト
 
-単体テストは 73 件です。
+単体テストは 89 件です。
 
 | 対象 | 主な内容 |
 |---|---|
-| ViewModel（一覧・詳細・サインイン） | 読み込み・追加読み込み・絞り込み・再試行、レート制限の後にサインインしたときの再読み込み、Device Flow の状態の切り替わり、回転やプロセスの終了の後の再開 |
-| Repository | MockWebServer を使った API の呼び出しとエラーの変換、Device Flow の問い合わせの間隔（`slow_down`、期限切れ、拒否、一時的な障害） |
+| ViewModel（一覧・詳細・サインイン） | 読み込み・追加読み込み・絞り込み・再試行、レート制限の後にサインインしたときの再読み込み、サインインの状態に合わせた草の表示、Device Flow の状態の切り替わり、回転やプロセスの終了の後の再開 |
+| Repository | MockWebServer を使った API の呼び出しとエラーの変換（GraphQL のエラーを含む）、Device Flow の問い合わせの間隔（`slow_down`、期限切れ、拒否、一時的な障害） |
 | トークンの管理 | 期限前の更新、401 のときの更新とサインアウト、同時に 401 が返ったときに更新が1回だけ行われること |
 | 通信 | 認証ヘッダーを `api.github.com` だけに付けること、401 のときのやり直しが1回までであること |
 | 保存 | 暗号化して読み戻せること、別の鍵や別のファイルの暗号文を壊れたデータとして扱うこと |
-| 表示用の処理 | 数値の短縮表示（`24.1k` など）、相対時間 |
+| 表示用の処理 | 数値の短縮表示（`24.1k` など）、相対時間、草のマスの大きさ・月のラベルの位置・TalkBack での選択の移動 |
 
 ## 今後の改善
 
 - Compose の UI テストとスクリーンショットテスト
 - Room によるオフライン対応
-- GitHub の「草」（GraphQL API はサインインが必要）
 - 起動時に絞り込み欄にフォーカスが当たり、キーボードが出ることがある（ハードウェアキーボードのある端末やエミュレーター）
 
 ## ドキュメント

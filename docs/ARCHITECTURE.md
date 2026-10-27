@@ -111,7 +111,7 @@ UI は [DESIGN.md の「3. サインイン」](design/DESIGN.md) を参照。サ
 | `:core:model` | `AuthState`（`SignedOut` / `SignedIn(login, avatarUrl)`）、`DeviceCode`、`DeviceAuthorizationResult`（`Authorized` / `Expired` / `Denied`）。`GitHubException.OAuth`（GitHub App の設定の誤りなど） |
 | `:core:network` | `GitHubOAuthApi`（`https://github.com/` 向け。form 形式の POST、`Accept: application/json`）、`AuthInterceptor`、`TokenAuthenticator`、トークンを受け取るためのインターフェース `AuthTokenProvider`、`GitHubOAuthConfig`（Client ID） |
 | `:core:datastore` | `AuthSessionStore`（暗号化したサインイン情報の保存。下の「保存」を参照） |
-| `:core:data` | `AuthRepository`（サインインの状態、Device Flow、サインアウト）と、`AuthSessionManager`（`AuthTokenProvider` の実装。トークンの保持と更新） |
+| `:core:data` | `AuthRepository`（サインインの状態、Device Flow、サインアウト）と、`AuthSessionManager`（`AuthTokenProvider` の実装。トークンの保持と更新）。サインインが必要な `ContributionRepository`（草） |
 | `:core:ui` | `GitHubErrorState`（レート制限のときにサインインを勧める表示）、`ShowSnackbar` |
 | `:feature:signin` | サインイン画面と `SignInViewModel`、`SignInNavKey` |
 | `:feature:userlist`、`:feature:userdetail` | メニューの「サインイン／サインアウト」、レート制限のときのサインインへの導線、サインイン後の再読み込み |
@@ -194,6 +194,17 @@ core:data ─▶ core:network（AuthTokenProvider を定義）
 - `/users/{login}/repos` はスター順に並べられないので、`GET /search/repositories?q=user:{login} fork:true&sort=stars` を使う
 - 全件を取ってから手元で並べるより呼び出し回数が少なく、Search API の制限（認証なしで 1 分に 10 回）は通常の API（1 時間に 60 回）と別枠なので、通常の API の回数も節約できる
 - 人気なリポジトリが取得できなかったときは、セクションごと表示しない
+
+### 草：GraphQL API を使い、サインインしているときだけ表示する
+
+- GitHub の草（`contributionsCollection.contributionCalendar`）は GraphQL API でしか取れず、GraphQL API はサインインが必要
+- 認証なしの Events API（直近90日、最大300件）から近似する案もあったが、GitHub の草と数が一致しないので採らない。未ログインのときは、草の場所にサインインを勧めるカードを出す
+- 期間は過去1年だけ（`from` / `to` を指定しない）。年の切り替えはしない
+- `:core:data` の `ContributionRepository` が `POST /graphql` を呼ぶ。GraphQL のエラーは HTTP 200 で本文の `errors` に入るので、`NOT_FOUND` は `NotFound`、`RATE_LIMITED` は `RateLimited` に変換する
+- Organization と Bot には草がない（`NOT_FOUND`）。プロフィールの種類が User 以外とわかった時点で、問い合わせずにセクションを隠す
+- `UserDetailViewModel` はサインインの状態を見て、サインインしたら読み込み、サインアウトしたら（401 による自動サインアウトを含む）サインインを勧める表示に戻す
+- POST なので HTTP キャッシュは効かない。詳細を開くたびに1回呼ぶ（GraphQL API の上限は REST API と別枠）
+- 描画は `Canvas` で行い、マス1つずつを Composable にしない（約 370 個）。タップは領域全体で受けて、指の位置から日を決める
 
 ### 一覧の絞り込み中は自動で追加読み込みしない
 

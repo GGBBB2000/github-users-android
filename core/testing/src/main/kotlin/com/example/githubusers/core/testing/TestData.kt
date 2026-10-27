@@ -1,11 +1,16 @@
 package com.example.githubusers.core.testing
 
 import com.example.githubusers.core.model.AccountType
+import com.example.githubusers.core.model.ContributionCalendar
+import com.example.githubusers.core.model.ContributionDay
+import com.example.githubusers.core.model.ContributionLevel
+import com.example.githubusers.core.model.ContributionWeek
 import com.example.githubusers.core.model.DeviceCode
 import com.example.githubusers.core.model.Repo
 import com.example.githubusers.core.model.User
 import com.example.githubusers.core.model.UserDetail
 import java.time.Instant
+import java.time.LocalDate
 
 /** テストとプレビューで使うデータ。 */
 object TestData {
@@ -61,4 +66,39 @@ object TestData {
         expiresAt = expiresAt,
         intervalSeconds = 5,
     )
+
+    /**
+     * [end] で終わる過去1年間（53週）のカレンダー。日曜始まりで、最後の週は [end] の曜日で終わる。
+     * 件数は [countOf] で決める（初期値は 0 件）。
+     */
+    fun contributionCalendar(
+        end: LocalDate = LocalDate.parse("2026-10-28"),
+        countOf: (LocalDate) -> Int = { 0 },
+    ): ContributionCalendar {
+        val lastSunday = end.minusDays((end.dayOfWeek.value % 7).toLong())
+        val firstSunday = lastSunday.minusWeeks(52)
+        val weeks = (0 until 53).map { w ->
+            val sunday = firstSunday.plusWeeks(w.toLong())
+            ContributionWeek(
+                days = (0 until 7).map { sunday.plusDays(it.toLong()) }
+                    .filter { !it.isAfter(end) }
+                    .map { date ->
+                        val count = countOf(date)
+                        ContributionDay(
+                            date = date,
+                            weekday = date.dayOfWeek.value % 7,
+                            count = count,
+                            level = when {
+                                count == 0 -> ContributionLevel.None
+                                count < 3 -> ContributionLevel.FirstQuartile
+                                count < 6 -> ContributionLevel.SecondQuartile
+                                count < 10 -> ContributionLevel.ThirdQuartile
+                                else -> ContributionLevel.FourthQuartile
+                            },
+                        )
+                    },
+            )
+        }
+        return ContributionCalendar(totalContributions = weeks.sumOf { w -> w.days.sumOf { it.count } }, weeks = weeks)
+    }
 }

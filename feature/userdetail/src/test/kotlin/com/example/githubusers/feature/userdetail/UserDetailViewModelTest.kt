@@ -2,7 +2,9 @@ package com.example.githubusers.feature.userdetail
 
 import com.example.githubusers.core.model.GitHubException
 import com.example.githubusers.core.model.RepoSort
+import com.example.githubusers.core.model.AccountType
 import com.example.githubusers.core.testing.FakeAuthRepository
+import com.example.githubusers.core.testing.FakeContributionRepository
 import com.example.githubusers.core.testing.FakeRepoRepository
 import com.example.githubusers.core.testing.FakeUserRepository
 import com.example.githubusers.core.testing.MainDispatcherRule
@@ -27,8 +29,10 @@ class UserDetailViewModelTest {
     )
 
     private val authRepository = FakeAuthRepository()
+    private val contributionRepository = FakeContributionRepository()
 
-    private fun createViewModel() = UserDetailViewModel("mojombo", userRepository, repoRepository, authRepository)
+    private fun createViewModel() =
+        UserDetailViewModel("mojombo", userRepository, repoRepository, contributionRepository, authRepository)
 
     @Test
     fun `プロフィール・人気のリポジトリ・リポジトリ一覧を読み込む`() = runTest {
@@ -130,5 +134,79 @@ class UserDetailViewModelTest {
 
         assertTrue(viewModel.uiState.value.popularRepos is PopularReposState.Success)
         assertEquals(requestsBefore, repoRepository.requests.size)
+    }
+
+    @Test
+    fun `未ログインなら草の代わりにサインインを勧める`() = runTest {
+        val viewModel = createViewModel()
+
+        assertEquals(ContributionState.SignedOut, viewModel.uiState.value.contributions)
+        assertTrue(contributionRepository.requests.isEmpty())
+    }
+
+    @Test
+    fun `サインインしていれば草を読み込む`() = runTest {
+        authRepository.signIn()
+        val viewModel = createViewModel()
+
+        assertEquals(
+            ContributionState.Success(contributionRepository.calendar),
+            viewModel.uiState.value.contributions,
+        )
+        assertEquals(listOf("mojombo"), contributionRepository.requests)
+    }
+
+    @Test
+    fun `サインインしたら草を読み込み、サインアウトしたらサインインを勧める表示に戻す`() = runTest {
+        val viewModel = createViewModel()
+
+        authRepository.signIn()
+        assertTrue(viewModel.uiState.value.contributions is ContributionState.Success)
+
+        authRepository.signOut()
+        assertEquals(ContributionState.SignedOut, viewModel.uiState.value.contributions)
+    }
+
+    @Test
+    fun `草の読み込みに失敗したら再試行できる`() = runTest {
+        authRepository.signIn()
+        val error = GitHubException.Network(IOException())
+        contributionRepository.nextError = error
+        val viewModel = createViewModel()
+        assertEquals(ContributionState.Failed(error), viewModel.uiState.value.contributions)
+
+        viewModel.retryContributions()
+
+        assertTrue(viewModel.uiState.value.contributions is ContributionState.Success)
+    }
+
+    @Test
+    fun `Organization には草を出さない`() = runTest {
+        userRepository.details = mapOf(user.login to user.copy(type = AccountType.Organization))
+        val viewModel = createViewModel()
+
+        assertEquals(ContributionState.Hidden, viewModel.uiState.value.contributions)
+
+        // サインインしても問い合わせない
+        authRepository.signIn()
+        assertEquals(ContributionState.Hidden, viewModel.uiState.value.contributions)
+        assertTrue(contributionRepository.requests.isEmpty())
+    }
+
+    @Test
+    fun `GraphQL がユーザーを見つけられなければ草を出さない`() = runTest {
+        authRepository.signIn()
+        contributionRepository.nextError = GitHubException.NotFound()
+        val viewModel = createViewModel()
+
+        assertEquals(ContributionState.Hidden, viewModel.uiState.value.contributions)
+    }
+
+    @Test
+    fun `サインインの設定がなければ草のセクションを出さない`() = runTest {
+        authRepository.isSignInAvailable = false
+        val viewModel = createViewModel()
+
+        assertEquals(ContributionState.Hidden, viewModel.uiState.value.contributions)
     }
 }

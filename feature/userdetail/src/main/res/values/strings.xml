@@ -41,4 +41,32 @@
     <string name="feature_userdetail_no_repos">公開リポジトリはありません</string>
     <string name="feature_userdetail_repos_failed">リポジトリを読み込めませんでした</string>
     <string name="feature_userdetail_retry">再試行</string>
+
+    <string name="feature_userdetail_contrib_title">過去1年間のコントリビューション</string>
+    <string name="feature_userdetail_contrib_total">%1$s 件</string>
+    <string name="feature_userdetail_contrib_month">%1$d月</string>
+    <string name="feature_userdetail_contrib_monday">月</string>
+    <string name="feature_userdetail_contrib_wednesday">水</string>
+    <string name="feature_userdetail_contrib_friday">金</string>
+    <string name="feature_userdetail_contrib_hint">マスをタップすると件数を表示</string>
+    <string name="feature_userdetail_contrib_selected">%1$s  %2$s 件</string>
+    <string name="feature_userdetail_contrib_selected_spoken">%1$s %2$s 件</string>
+    <string name="feature_userdetail_contrib_date_pattern" translatable="false">yyyy/M/d（E）</string>
+    <string name="feature_userdetail_contrib_date_spoken_pattern" translatable="false">yyyy年M月d日 EEEE</string>
+    <string name="feature_userdetail_contrib_summary_date_pattern" translatable="false">yyyy年M月d日</string>
+    <string name="feature_userdetail_contrib_empty">過去1年間のコントリビューションはありません</string>
+    <string name="feature_userdetail_contrib_less">少ない</string>
+    <string name="feature_userdetail_contrib_more">多い</string>
+    <string name="feature_userdetail_contrib_legend">凡例：色が濃いほど件数が多い</string>
+    <string name="feature_userdetail_contrib_summary">過去1年間のコントリビューション %1$s 件</string>
+    <string name="feature_userdetail_contrib_summary_busiest">過去1年間のコントリビューション %1$s 件。最も多い日は %2$s の %3$s 件</string>
+    <string name="feature_userdetail_contrib_loading">コントリビューションを読み込み中</string>
+    <string name="feature_userdetail_contrib_prev_day">前の日</string>
+    <string name="feature_userdetail_contrib_next_day">次の日</string>
+    <string name="feature_userdetail_contrib_prev_week">前の週</string>
+    <string name="feature_userdetail_contrib_next_week">次の週</string>
+    <string name="feature_userdetail_contrib_signed_out_title">コントリビューションのカレンダー</string>
+    <string name="feature_userdetail_contrib_signed_out_message">サインインすると、コントリビューションのカレンダーを表示できます</string>
+    <string name="feature_userdetail_contrib_sign_in">GitHub にサインイン</string>
+    <string name="feature_userdetail_contrib_failed">コントリビューションを読み込めませんでした</string>
 </resources>

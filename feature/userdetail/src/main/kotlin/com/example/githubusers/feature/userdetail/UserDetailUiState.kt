@@ -1,5 +1,6 @@
 package com.example.githubusers.feature.userdetail
 
+import com.example.githubusers.core.model.ContributionCalendar
 import com.example.githubusers.core.model.GitHubException
 import com.example.githubusers.core.model.Repo
 import com.example.githubusers.core.model.RepoSort
@@ -10,9 +11,22 @@ data class UserDetailUiState(
     val profile: ProfileState = ProfileState.Loading,
     val popularRepos: PopularReposState = PopularReposState.Loading,
     val repos: RepoListState = RepoListState(),
+    val contributions: ContributionState = ContributionState.Loading,
     /** サインインの入口を出せるか（未ログインで、サインインの設定がある） */
     val canSignIn: Boolean = false,
 )
+
+/** 草（コントリビューションのカレンダー）。GraphQL API を使うので、サインインが必要。 */
+sealed interface ContributionState {
+    /** セクションごと出さない（Organization や Bot、サインインの設定がない） */
+    data object Hidden : ContributionState
+    data object Loading : ContributionState
+
+    /** サインインを勧めるカードを出す */
+    data object SignedOut : ContributionState
+    data class Failed(val error: GitHubException) : ContributionState
+    data class Success(val calendar: ContributionCalendar) : ContributionState
+}
 
 sealed interface ProfileState {
     data object Loading : ProfileState

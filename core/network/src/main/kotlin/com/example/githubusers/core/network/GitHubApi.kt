@@ -1,11 +1,15 @@
 package com.example.githubusers.core.network
 
+import com.example.githubusers.core.network.model.GraphQLRequest
+import com.example.githubusers.core.network.model.NetworkContributionResponse
 import com.example.githubusers.core.network.model.NetworkRepo
 import com.example.githubusers.core.network.model.NetworkRepoSearchResult
 import com.example.githubusers.core.network.model.NetworkUser
 import com.example.githubusers.core.network.model.NetworkUserDetail
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Tag
@@ -58,7 +62,29 @@ interface GitHubApi {
         @Query("page") page: Int,
     ): NetworkRepoSearchResult
 
+    /**
+     * コントリビューションのカレンダー（草）。GraphQL API は**サインインが必要**。
+     *
+     * GraphQL のエラー（ユーザーが見つからないなど）は HTTP 200 で返り、本文の `errors` に入る。
+     */
+    @POST("graphql")
+    suspend fun getContributions(@Body request: GraphQLRequest): NetworkContributionResponse
+
     companion object {
         const val BASE_URL = "https://api.github.com/"
+
+        /** 期間を指定しなければ、過去1年間になる。 */
+        const val CONTRIBUTIONS_QUERY = """
+            query(${'$'}login: String!) {
+              user(login: ${'$'}login) {
+                contributionsCollection {
+                  contributionCalendar {
+                    totalContributions
+                    weeks { contributionDays { date weekday contributionCount contributionLevel } }
+                  }
+                }
+              }
+            }
+        """
     }
 }

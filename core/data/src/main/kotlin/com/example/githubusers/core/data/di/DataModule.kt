@@ -2,7 +2,9 @@ package com.example.githubusers.core.data.di
 
 import com.example.githubusers.core.data.auth.AuthSessionManager
 import com.example.githubusers.core.data.repository.AuthRepository
+import com.example.githubusers.core.data.repository.ContributionRepository
 import com.example.githubusers.core.data.repository.DefaultAuthRepository
+import com.example.githubusers.core.data.repository.DefaultContributionRepository
 import com.example.githubusers.core.data.repository.DefaultRepoRepository
 import com.example.githubusers.core.data.repository.DefaultUserRepository
 import com.example.githubusers.core.data.repository.RepoRepository
@@ -23,6 +25,9 @@ internal interface DataModule {
 
     @Binds
     fun bindRepoRepository(impl: DefaultRepoRepository): RepoRepository
+
+    @Binds
+    fun bindContributionRepository(impl: DefaultContributionRepository): ContributionRepository
 
     @Binds
     fun bindAuthRepository(impl: DefaultAuthRepository): AuthRepository

@@ -88,6 +88,7 @@
         <div style="display: flex; flex-direction: column"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">最終更新</span><span style="font-size: 16px; line-height: 24px">[updated_at の相対表示]</span></div>
       </li>
     </ul>
+    <dc-import name="Contribution" layout="phone" state="{{contrib}}" dark="{{dark}}" hint-size="358px,207px"></dc-import>
   </section>
 
   <section style="padding: 24px 0 0; display: flex; flex-direction: column; gap: 8px">
@@ -141,7 +142,7 @@
   </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"expanded":{"editor":"boolean","default":false},"$preview":{"width":390,"height":1880}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"expanded":{"editor":"boolean","default":false},"contrib":{"editor":"enum","options":["data","selected","empty","loading","signedOut","error","hidden"],"default":"data"},"$preview":{"width":390,"height":2100}}'>
 class Component extends DCLogic {
   renderVals() {
     var self = this;
@@ -166,8 +167,10 @@ class Component extends DCLogic {
     });
     var L = '--p:#6750A4;--op:#FFFFFF;--pc:#EADDFF;--opc:#21005D;--sc2:#E8DEF8;--osc2:#1D192B;--tc:#FFD8E4;--otc:#31111D;--s:#FEF7FF;--os:#1D1B20;--osv:#49454F;--ol:#79747E;--olv:#CAC4D0;--cl:#F7F2FA;--c:#F3EDF7;--ch:#ECE6F0;--chh:#E6E0E9;';
     var D = '--p:#D0BCFF;--op:#381E72;--pc:#4F378B;--opc:#EADDFF;--sc2:#4A4458;--osc2:#E8DEF8;--tc:#633B48;--otc:#FFD8E4;--s:#141218;--os:#E6E0E9;--osv:#CAC4D0;--ol:#938F99;--olv:#49454F;--cl:#1D1B20;--c:#211F26;--ch:#2B2930;--chh:#36343B;';
-    var rootStyle = (this.props.dark ? D : L) + ' width: 390px; height: 1880px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--s); color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif; overflow: hidden';
+    var rootStyle = (this.props.dark ? D : L) + ' width: 390px; height: 2100px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--s); color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif; overflow: hidden';
     return {
+      contrib: this.props.contrib || 'data',
+      dark: !!this.props.dark,
       popular: popular,
       repos: repos,
       rootStyle: rootStyle,

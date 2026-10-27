@@ -123,6 +123,16 @@ private fun LazyListScope.expandedContent(
             }
         }
     }
+    if (uiState.contributions != ContributionState.Hidden) {
+        item(key = "contributions") {
+            ContributionSection(
+                state = uiState.contributions,
+                isTablet = true,
+                onSignIn = callbacks.onSignIn,
+                onRetry = callbacks.onRetryContributions,
+            )
+        }
+    }
     val popular = uiState.popularRepos
     if (popular is PopularReposState.Success && popular.repos.isNotEmpty()) {
         item(key = "popular") {

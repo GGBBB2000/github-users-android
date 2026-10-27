@@ -1,13 +1,19 @@
 package com.example.githubusers.core.data
 
 import com.example.githubusers.core.model.AccountType
+import com.example.githubusers.core.model.ContributionCalendar
+import com.example.githubusers.core.model.ContributionDay
+import com.example.githubusers.core.model.ContributionLevel
+import com.example.githubusers.core.model.ContributionWeek
 import com.example.githubusers.core.model.Repo
 import com.example.githubusers.core.model.User
 import com.example.githubusers.core.model.UserDetail
+import com.example.githubusers.core.network.model.NetworkContributionCalendar
 import com.example.githubusers.core.network.model.NetworkRepo
 import com.example.githubusers.core.network.model.NetworkUser
 import com.example.githubusers.core.network.model.NetworkUserDetail
 import java.time.Instant
+import java.time.LocalDate
 
 internal fun NetworkUser.asModel() = User(
     id = id,
@@ -48,6 +54,30 @@ internal fun NetworkRepo.asModel() = Repo(
     updatedAt = Instant.parse(updatedAt),
     isFork = fork,
 )
+
+internal fun NetworkContributionCalendar.asModel() = ContributionCalendar(
+    totalContributions = totalContributions,
+    weeks = weeks.map { week ->
+        ContributionWeek(
+            days = week.contributionDays.map { day ->
+                ContributionDay(
+                    date = LocalDate.parse(day.date),
+                    weekday = day.weekday,
+                    count = day.contributionCount,
+                    level = contributionLevel(day.contributionLevel),
+                )
+            },
+        )
+    },
+)
+
+private fun contributionLevel(value: String): ContributionLevel = when (value) {
+    "FIRST_QUARTILE" -> ContributionLevel.FirstQuartile
+    "SECOND_QUARTILE" -> ContributionLevel.SecondQuartile
+    "THIRD_QUARTILE" -> ContributionLevel.ThirdQuartile
+    "FOURTH_QUARTILE" -> ContributionLevel.FourthQuartile
+    else -> ContributionLevel.None
+}
 
 // GitHub は未設定の項目を null ではなく空文字で返すことがある（blog など）
 private fun String?.nullIfBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }

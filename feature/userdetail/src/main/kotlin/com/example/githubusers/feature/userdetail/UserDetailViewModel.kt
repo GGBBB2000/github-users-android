@@ -3,8 +3,10 @@ package com.example.githubusers.feature.userdetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.githubusers.core.data.repository.AuthRepository
+import com.example.githubusers.core.data.repository.ContributionRepository
 import com.example.githubusers.core.data.repository.RepoRepository
 import com.example.githubusers.core.data.repository.UserRepository
+import com.example.githubusers.core.model.AccountType
 import com.example.githubusers.core.model.AuthState
 import com.example.githubusers.core.model.GitHubException
 import com.example.githubusers.core.model.RepoSort
@@ -20,8 +22,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * ユーザー詳細。プロフィール、人気のリポジトリ、リポジトリ一覧を並行して読み込む。
+ * ユーザー詳細。プロフィール、人気のリポジトリ、リポジトリ一覧、草を並行して読み込む。
  *
+ * 草は GraphQL API を使うので、サインインしているときだけ読み込む。サインインしていなければ、サインインを勧める。
  * 表示するユーザーごとに別のインスタンスを作る（[Factory] で [login] を渡す）。
  * レート制限で失敗した後にサインインしたら、失敗した読み込みをやり直す。
  */
@@ -30,6 +33,7 @@ class UserDetailViewModel @AssistedInject constructor(
     @Assisted private val login: String,
     private val userRepository: UserRepository,
     private val repoRepository: RepoRepository,
+    private val contributionRepository: ContributionRepository,
     private val authRepository: AuthRepository,
 ) : ViewModel() {
 
@@ -37,6 +41,10 @@ class UserDetailViewModel @AssistedInject constructor(
     val uiState: StateFlow<UserDetailUiState> = _uiState.asStateFlow()
 
     private var reposJob: Job? = null
+    private var contributionsJob: Job? = null
+
+    /** Organization や Bot のように、草がないアカウントか（わかった時点で true にする） */
+    private var hasNoContributions = false
 
     init {
         loadAll()
@@ -46,6 +54,7 @@ class UserDetailViewModel @AssistedInject constructor(
                 _uiState.update {
                     it.copy(canSignIn = authRepository.isSignInAvailable && state is AuthState.SignedOut)
                 }
+                onAuthStateChanged(state)
                 if (previous is AuthState.SignedOut && state is AuthState.SignedIn) onSignedIn()
                 previous = state
             }
@@ -61,6 +70,45 @@ class UserDetailViewModel @AssistedInject constructor(
         }
         if (state.popularRepos == PopularReposState.Unavailable) loadPopularRepos()
         if (state.repos.error is GitHubException.RateLimited) retryRepos()
+    }
+
+    /** 草の読み込みに失敗したとき。 */
+    fun retryContributions() {
+        loadContributions()
+    }
+
+    private fun onAuthStateChanged(state: AuthState) {
+        if (!authRepository.isSignInAvailable || hasNoContributions) {
+            _uiState.update { it.copy(contributions = ContributionState.Hidden) }
+            return
+        }
+        when (state) {
+            AuthState.SignedOut -> {
+                // 読み込み中に 401 で自動的にサインアウトしたときも、ここでサインインを勧める表示に変わる
+                contributionsJob?.cancel()
+                _uiState.update { it.copy(contributions = ContributionState.SignedOut) }
+            }
+            is AuthState.SignedIn -> {
+                if (_uiState.value.contributions !is ContributionState.Success) loadContributions()
+            }
+        }
+    }
+
+    private fun loadContributions() {
+        contributionsJob?.cancel()
+        _uiState.update { it.copy(contributions = ContributionState.Loading) }
+        contributionsJob = viewModelScope.launch {
+            val contributions = try {
+                ContributionState.Success(contributionRepository.getContributionCalendar(login))
+            } catch (_: GitHubException.NotFound) {
+                // Organization と Bot には草がない
+                hasNoContributions = true
+                ContributionState.Hidden
+            } catch (e: GitHubException) {
+                ContributionState.Failed(e)
+            }
+            _uiState.update { it.copy(contributions = contributions) }
+        }
     }
 
     /** プロフィールの読み込みに失敗したとき。すべて読み込み直す。 */
@@ -87,6 +135,7 @@ class UserDetailViewModel @AssistedInject constructor(
     }
 
     private fun loadAll() {
+        if (_uiState.value.contributions is ContributionState.Failed) loadContributions()
         loadProfile()
         loadPopularRepos()
         _uiState.update { it.copy(repos = RepoListState(sort = it.repos.sort)) }
@@ -102,6 +151,12 @@ class UserDetailViewModel @AssistedInject constructor(
                 ProfileState.Failed(e)
             }
             _uiState.update { it.copy(profile = profile) }
+            if (profile is ProfileState.Success && profile.user.type != AccountType.User) {
+                // Organization と Bot には草がないので、問い合わせずに隠す
+                hasNoContributions = true
+                contributionsJob?.cancel()
+                _uiState.update { it.copy(contributions = ContributionState.Hidden) }
+            }
         }
     }
 
