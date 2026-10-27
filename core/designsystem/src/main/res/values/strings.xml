@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_designsystem_retry">再試行</string>
+    <string name="core_designsystem_clear">入力を消去</string>
+</resources>

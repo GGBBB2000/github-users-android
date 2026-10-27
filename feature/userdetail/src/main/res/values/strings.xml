@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_userdetail_back">戻る</string>
+    <string name="feature_userdetail_open_in_github">GitHub で開く</string>
+    <string name="feature_userdetail_share">共有</string>
+    <string name="feature_userdetail_share_title">%1$s の GitHub プロフィール</string>
+    <string name="feature_userdetail_show_details">プロフィールの詳細</string>
+    <string name="feature_userdetail_hide_details">プロフィールの詳細を閉じる</string>
+
+    <string name="feature_userdetail_followers">フォロワー</string>
+    <string name="feature_userdetail_following">フォロー中</string>
+    <string name="feature_userdetail_repos">リポジトリ</string>
+    <string name="feature_userdetail_gists">Gist</string>
+    <string name="feature_userdetail_public_repos">公開リポジトリ</string>
+    <string name="feature_userdetail_public_gists">公開 Gist</string>
+
+    <string name="feature_userdetail_section_profile">プロフィール</string>
+    <string name="feature_userdetail_section_activity">アクティビティ</string>
+    <string name="feature_userdetail_section_popular">人気なリポジトリ</string>
+    <string name="feature_userdetail_section_repos">リポジトリ一覧</string>
+
+    <string name="feature_userdetail_company">所属</string>
+    <string name="feature_userdetail_location">場所</string>
+    <string name="feature_userdetail_website">ウェブサイト</string>
+    <string name="feature_userdetail_email">メール</string>
+    <string name="feature_userdetail_email_private">非公開</string>
+    <string name="feature_userdetail_twitter">X (Twitter)</string>
+    <string name="feature_userdetail_no_profile">公開されているプロフィール情報はありません</string>
+    <string name="feature_userdetail_joined">GitHub 登録日</string>
+    <string name="feature_userdetail_updated">最終更新</string>
+
+    <string name="feature_userdetail_repo_count">%1$d 件</string>
+    <string name="feature_userdetail_sort">並び替え</string>
+    <string name="feature_userdetail_sort_updated">更新順</string>
+    <string name="feature_userdetail_sort_stars">スター順</string>
+    <string name="feature_userdetail_sort_name">名前順</string>
+    <string name="feature_userdetail_repo_updated">更新 %1$s</string>
+    <string name="feature_userdetail_stars">スター %1$s</string>
+    <string name="feature_userdetail_forks">フォーク %1$s</string>
+    <string name="feature_userdetail_show_more">さらに表示</string>
+    <string name="feature_userdetail_no_repos">公開リポジトリはありません</string>
+    <string name="feature_userdetail_repos_failed">リポジトリを読み込めませんでした</string>
+    <string name="feature_userdetail_retry">再試行</string>
+</resources>

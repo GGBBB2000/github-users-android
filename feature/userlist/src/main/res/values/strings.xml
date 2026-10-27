@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_userlist_title">GitHub Users</string>
+    <string name="feature_userlist_filter_placeholder">ユーザー名で絞り込み</string>
+    <string name="feature_userlist_more_options">その他のオプション</string>
+    <string name="feature_userlist_reload">再読み込み</string>
+    <string name="feature_userlist_supporting">ID %1$d · %2$s</string>
+    <string name="feature_userlist_loading_more">さらに読み込み中…</string>
+    <string name="feature_userlist_load_more_failed">続きを読み込めませんでした</string>
+    <string name="feature_userlist_retry">再試行</string>
+    <string name="feature_userlist_load_more">さらに読み込む</string>
+    <string name="feature_userlist_filtering">読み込み済みの %1$d 人から絞り込んでいます</string>
+    <string name="feature_userlist_no_match">「%1$s」に一致するユーザーはいません</string>
+    <string name="feature_userlist_end">すべてのユーザーを読み込みました</string>
+    <string name="feature_userlist_empty">ユーザーがいません</string>
+</resources>

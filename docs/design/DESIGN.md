@@ -13,7 +13,7 @@ GitHub の User API を使う Android アプリ（Kotlin / Jetpack Compose / Mat
 
 ## 画面構成とアダプティブ
 
-- `NavigableListDetailPaneScaffold`（material3-adaptive）で画面を構成する
+- Navigation 3 の `NavDisplay` と `ListDetailSceneStrategy`（material3-adaptive-navigation3）で画面を構成する
   - Compact（スマホ）：リスト → 詳細の1ペイン遷移。戻る操作でリストへ戻る
   - Expanded（タブレット）：左にリスト（幅 約400dp）、右に詳細の2ペイン
   - タブレットで未選択のとき、詳細ペインは**空欄**（`surfaceContainer` の背景のみ）

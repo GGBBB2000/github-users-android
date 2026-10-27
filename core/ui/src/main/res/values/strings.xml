@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_ui_avatar_description">%1$s のアバター</string>
+    <string name="core_ui_just_now">たった今</string>
+    <string name="core_ui_date_pattern" translatable="false">yyyy年M月d日</string>
+    <string name="core_ui_date_with_relative">%1$s（%2$s）</string>
+    <plurals name="core_ui_minutes_ago">
+        <item quantity="one">%d分前</item>
+        <item quantity="other">%d分前</item>
+    </plurals>
+    <plurals name="core_ui_hours_ago">
+        <item quantity="one">%d時間前</item>
+        <item quantity="other">%d時間前</item>
+    </plurals>
+    <plurals name="core_ui_days_ago">
+        <item quantity="one">%d日前</item>
+        <item quantity="other">%d日前</item>
+    </plurals>
+    <plurals name="core_ui_months_ago">
+        <item quantity="one">%dか月前</item>
+        <item quantity="other">%dか月前</item>
+    </plurals>
+    <plurals name="core_ui_years_ago">
+        <item quantity="one">%d年前</item>
+        <item quantity="other">%d年前</item>
+    </plurals>
+    <string name="core_ui_error_title">読み込めませんでした</string>
+    <string name="core_ui_error_network">ネットワーク接続を確認して、もう一度お試しください。</string>
+    <string name="core_ui_error_rate_limit">API の利用上限に達しました。しばらく待ってから再試行してください。</string>
+    <string name="core_ui_error_rate_limit_with_time">API の利用上限に達しました。%1$s ごろに再試行してください。</string>
+    <string name="core_ui_error_not_found">ユーザーが見つかりませんでした。</string>
+    <string name="core_ui_error_other">時間をおいて、もう一度お試しください。</string>
+</resources>

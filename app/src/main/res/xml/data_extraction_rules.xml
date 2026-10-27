@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 保存しているのは HTTP キャッシュだけなので、バックアップと端末間の移行の対象にしない -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="." />
+    </device-transfer>
+</data-extraction-rules>
