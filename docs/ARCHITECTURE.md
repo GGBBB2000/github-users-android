@@ -13,9 +13,11 @@
 | `:core:data` | Android ライブラリ | Repository の定義と実装、API のレスポンス型からデータ型への変換、エラー型への変換 |
 | `:core:designsystem` | Android ライブラリ（Compose） | M3 テーマ（ライト／ダーク）、共通部品（検索欄、スケルトン、状態表示など） |
 | `:core:ui` | Android ライブラリ（Compose） | データ型を使う共通 UI（頭文字入りの丸に切り替わるアバター、数値・日付の表示、エラーメッセージ、Custom Tabs で開く処理など） |
+| `:core:datastore` | Android ライブラリ | （未実装）暗号化したアクセストークンの保存。DataStore と Tink を使う |
 | `:core:testing` | Android ライブラリ | テスト用の偽の Repository、テスト用のデータ、`MainDispatcherRule` など |
 | `:feature:userlist` | 機能モジュール | ユーザー一覧（リストペイン）の画面と ViewModel、遷移先の型 `UserListNavKey` と画面の登録処理 |
 | `:feature:userdetail` | 機能モジュール | ユーザー詳細（詳細ペイン）の画面と ViewModel、遷移先の型 `UserDetailNavKey` と画面の登録処理 |
+| `:feature:signin` | 機能モジュール | （未実装）Device Flow のサインイン画面と ViewModel、遷移先の型 `SignInNavKey` と画面の登録処理 |
 
 ### 依存の向き
 
@@ -32,7 +34,7 @@ app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
 
 | NiA のモジュール | 理由 |
 |---|---|
-| `core:database`、`core:datastore` | オフライン保存はしない（下の「キャッシュ」を参照）。OAuth のトークンや設定の保存が必要になったら追加する |
+| `core:database` | オフライン保存はしない（下の「キャッシュ」を参照） |
 | `core:domain` | 今は UseCase に分けるほどの処理がない |
 | `core:analytics`、`core:notifications` | このアプリでは使わない |
 | `core:navigation`、機能の `api` / `impl` 分割 | 機能どうしが直接遷移しないので、今は不要（下の「決定事項」を参照） |
@@ -75,12 +77,102 @@ app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
 
 - `minSdk = 26`。ダイナミックカラーは Android 12 以降だけで使い、それより前は M3 の標準テーマにする
 
-### 認証：最初は認証なしで作る
+### 認証：GitHub の Device Flow（未実装）
 
-- まずは認証なしで、すべての機能が動くものを作る
-- 後から OAuth でアクセストークンを取ってくる処理を追加する。追加するときは、トークンの保存先（`:core:datastore` など）と、OkHttp の `Interceptor` で `Authorization` ヘッダーを付ける仕組みを設計する
-- 後から追加しやすいように、API の呼び出しは `:core:network` に閉じ込め、ヘッダーを付ける処理を差し込める形にしておく
-- クライアントシークレットなどの秘密情報はリポジトリに入れない
+UI は [DESIGN.md の「3. サインイン」](design/DESIGN.md) を参照。サインインは任意で、しなくてもすべての機能を使える。
+
+#### 方式
+- 個人アクセストークン（PAT）をアプリに埋め込むと、APK から取り出されて誰でも使えてしまう。ユーザーに PAT を入力してもらうのは手間がかかる。そこで [Device Flow](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#device-flow) を使う
+  - Device Flow は `client_secret` を使わないので、アプリに秘密情報を入れずに済む
+  - アプリはパスワードを扱わない。ユーザーは GitHub のページ（Custom Tabs、または別の端末）でコードを入力する
+- 流れ
+  1. `POST https://github.com/login/device/code`（`client_id`）→ `device_code`、`user_code`、`verification_uri`、`expires_in`（既定 900 秒）、`interval`
+  2. `POST https://github.com/login/oauth/access_token`（`client_id`、`device_code`、`grant_type=urn:ietf:params:oauth:grant-type:device_code`）を `interval` 秒ごとに呼ぶ
+     - 失敗も HTTP 200 で返り、本文の `error` で区別する：`authorization_pending`（待つ）、`slow_down`（間隔を 5 秒延ばす。新しい間隔が本文に入る）、`expired_token`、`access_denied`、`device_flow_disabled`、`incorrect_client_credentials` など
+  3. 取得したトークンで `GET /user` を呼び、ログイン名とアバターを保存する
+
+#### アプリの種類：GitHub App
+- GitHub は OAuth App より GitHub App を勧めている。GitHub App のユーザートークンは 8 時間で切れ、リフレッシュトークン（6 か月）で更新する。漏れたときの被害が小さい
+- **Device Flow で取ったトークンは `client_secret` なしで更新できる**（[ドキュメント](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/refreshing-user-access-tokens)）。このため、アプリに秘密情報を入れずに期限付きトークンを使える
+- 権限は何も要求しない（公開情報の読み取りだけ）。利用上限は 1 時間 5,000 回
+- 実装は、`refresh_token` が返らない場合（期限なしのトークン）にも対応する。OAuth App に切り替えても設定の変更だけで動く
+- GitHub 側の設定で「Enable Device Flow」を有効にする。無効なら `device_flow_disabled` が返る
+
+#### client_id
+- `client_id` は APK に含まれるので秘密ではない。`gradle.properties` の `githubusers.oauthClientId` に書いてコミットし、`local.properties` で上書きできるようにする（フォークした人が自分の App で試せるように）
+- `:core:network` の `BuildConfig.GITHUB_CLIENT_ID` に入れる。空ならサインインの入口を出さない
+- `client_secret` は使わないし、リポジトリにも入れない
+
+#### モジュールごとの役割
+
+| モジュール | 追加するもの |
+|---|---|
+| `:core:model` | `AuthState`（`SignedOut` / `SignedIn(login, avatarUrl)`）、`DeviceCode`（`userCode`、`verificationUri`、`expiresAt`、`interval`）、`DeviceAuthorizationResult`（`Authorized` / `Expired` / `Denied`）。`GitHubException` に Device Flow の設定エラー用の型を追加 |
+| `:core:network` | `GitHubOAuthApi`（`https://github.com/` 向け。form 形式の POST、`Accept: application/json`）、`AuthInterceptor`、`TokenAuthenticator`、トークンを受け取るためのインターフェース `AuthTokenProvider` |
+| `:core:datastore`（新規） | 暗号化したトークンの保存（下の「保存」を参照） |
+| `:core:data` | `AuthRepository`（サインインの状態、Device Flow、サインアウト）と、`AuthTokenProvider` の実装 |
+| `:feature:signin`（新規） | サインイン画面と ViewModel、`SignInNavKey` |
+| `:feature:userlist`、`:feature:userdetail` | メニューの「サインイン／サインアウト」、レート制限のときのサインインへの導線 |
+| `:app` | `SignInNavKey` の登録、`DialogSceneStrategy` の追加、Snackbar の一本化（下の「Snackbar」を参照） |
+| `:core:testing` | `FakeAuthRepository` |
+
+依存の向きは今と同じで、`:core:network` は `:core:datastore` に依存しない。`:core:data` が両方を使い、`AuthTokenProvider` を実装して Hilt で `:core:network` に渡す。
+
+```
+core:data ─▶ core:network（AuthTokenProvider を定義）
+    └──────▶ core:datastore
+```
+
+#### 通信
+- OkHttpClient を 2 つに分ける。共通の設定（ログ）を持つ元のクライアントから `newBuilder()` で作り、接続プールは共有する
+  - API 用（`api.github.com`）：HTTP キャッシュ、`GitHubHeadersInterceptor`、`AuthInterceptor`、`TokenAuthenticator`
+  - OAuth 用（`github.com`）：キャッシュも認証ヘッダーも付けない
+- `AuthInterceptor`
+  - `AuthTokenProvider` がメモリに持っているトークンを `Authorization: Bearer` で付ける。通信のたびに DataStore を読まない
+  - ホストが `api.github.com` のときだけ付ける（アバター画像など別のホストにトークンを送らない。Coil は別のクライアントを使う）
+  - 有効期限まで 5 分を切っていたら、先に更新する
+- `TokenAuthenticator`（OkHttp の `Authenticator`。401 のときに呼ばれる）
+  - GitHub は、無効なトークンを付けると公開 API でも 401 を返す。対処しないと、ユーザーが GitHub 側で許可を取り消しただけでアプリが使えなくなる
+  - リフレッシュトークンがあれば更新して、新しいトークンでやり直す
+  - 更新できなければ（期限切れ、取り消し）トークンを消してサインアウトし、**ヘッダーなしで 1 回だけ**やり直す。サインアウトしたことを Snackbar で知らせる
+  - やり直しは 1 回まで（`priorResponse` を見て無限に繰り返さない）
+  - 更新は `Mutex` で 1 つにまとめる。リフレッシュトークンは使うたびに新しいものに変わるので、同時に 2 回更新すると片方が失敗する。待っていた側は、更新済みのトークンを使う
+- ログ：`HttpLoggingInterceptor` は今の `BASIC`（URL だけ）のままにする。`HEADERS` 以上にするとトークンがログに出るので、使う場合は `redactHeader("Authorization")` を付ける
+- HTTP キャッシュ
+  - 認証なしのレスポンスは `Cache-Control: public` で、`Vary` に `Authorization` を含まない。公開データなので、サインインの前後でキャッシュを共有しても問題ない
+  - サインアウト時は `Cache.evictAll()` で消す（`/user` など本人のデータを残さない）
+
+#### 保存：DataStore と Tink
+- `androidx.security:security-crypto`（`EncryptedSharedPreferences`）は非推奨になった。代わりに `androidx.datastore:datastore-tink`（1.3.0 で安定版）の `AeadSerializer` を使う
+  - Tink は Google が管理している。鍵は `AndroidKeysetManager` で作り、マスター鍵は Android Keystore に置く
+  - 保存する中身は kotlinx.serialization の JSON（`accessToken`、`accessTokenExpiresAt`、`refreshToken`、`refreshTokenExpiresAt`、`login`、`avatarUrl`）
+- 復号できないとき（バックアップから戻したときなど、Keystore の鍵は移らない）は、`CorruptionHandler` で空にして未ログインとして扱う。アプリは落とさない
+- バックアップの対象外にする。今の設定で `files/`（DataStore）は外れている。Tink の鍵を置く SharedPreferences（`sharedpref`）も外す
+
+#### Device Flow の問い合わせ
+- 間隔を守って問い合わせ続ける処理は `AuthRepository.awaitAuthorization(deviceCode)` に置く。`slow_down` で間隔を延ばし、期限が来たら `Expired` を返す。一時的な通信エラーでは止めず、次の間隔で再試行する
+- `delay` と時計を差し替えられるようにして、`runTest` の仮想時間でテストする
+- `SignInViewModel` は `DeviceCode` を `SavedStateHandle` に保存する。回転やプロセスの終了の後も、期限内なら同じコードで問い合わせを再開する
+- ブラウザを開いている間も、プロセスが生きていれば問い合わせを続ける（ViewModel のスコープ）。WorkManager などは使わない（最長 15 分なので不要）
+
+#### 画面のつなぎ方
+- `SignInNavKey` はバックスタックに積む。大きい画面では `DialogSceneStrategy` でダイアログ、それ以外は全画面にする（判定は `:app` が行い、`isTwoPane` と同じように渡す）
+- サインインに成功したら `SignInNavKey` を取り除く。一覧・詳細は `AuthState` の変化を見て、レート制限で失敗していた読み込みを再試行する
+- 一覧と詳細には、`:app` から `onSignInClick` を渡す（機能どうしは依存しない）
+
+#### Snackbar
+- 今は一覧の画面が自分で `SnackbarHostState` を持っている。サインインの結果や自動サインアウトは、どの画面にいても出す必要がある
+- NiA と同じように、`:app` が `SnackbarHostState` を 1 つ持ち、各画面には `onShowSnackbar(message, actionLabel): Boolean` を渡す形に変える
+
+#### サインアウト
+- 端末のトークンと HTTP キャッシュを消す
+- GitHub 側の許可を取り消す API（`DELETE /applications/{client_id}/token`）は `client_secret` が必要なので、アプリからは呼ばない。GitHub の設定ページを開けるようにする
+
+#### テスト
+- `:core:network`：MockWebServer で、HTTP 200 で返るエラーの読み取り、`AuthInterceptor` がヘッダーを付けること（別ホストには付けないこと）、`TokenAuthenticator` の更新とヘッダーなしでのやり直し、やり直しが 1 回までであること
+- `:core:data`：`awaitAuthorization` の `authorization_pending`、`slow_down`、期限切れ、拒否、一時的な通信エラー。同時に 401 が返ったときに更新が 1 回だけ行われること
+- `:core:datastore`：保存と読み出し、復号できないときに空になること（Robolectric は使わず、`AeadSerializer` に Tink の鍵を直接渡す JVM テストにする）
+- `:feature:signin`：ViewModel の状態の切り替わり、`SavedStateHandle` からの再開
 
 ### エラーの扱い
 
