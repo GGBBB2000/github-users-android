@@ -2,6 +2,7 @@ package com.example.githubusers.feature.userdetail
 
 import com.example.githubusers.core.model.GitHubException
 import com.example.githubusers.core.model.RepoSort
+import com.example.githubusers.core.testing.FakeAuthRepository
 import com.example.githubusers.core.testing.FakeRepoRepository
 import com.example.githubusers.core.testing.FakeUserRepository
 import com.example.githubusers.core.testing.MainDispatcherRule
@@ -25,7 +26,9 @@ class UserDetailViewModelTest {
         repos = (1L..65L).map { TestData.repo(it, name = "repo$it", stars = it.toInt() * 10) },
     )
 
-    private fun createViewModel() = UserDetailViewModel("mojombo", userRepository, repoRepository)
+    private val authRepository = FakeAuthRepository()
+
+    private fun createViewModel() = UserDetailViewModel("mojombo", userRepository, repoRepository, authRepository)
 
     @Test
     fun `プロフィール・人気のリポジトリ・リポジトリ一覧を読み込む`() = runTest {
@@ -96,5 +99,36 @@ class UserDetailViewModelTest {
         val repos = viewModel.uiState.value.repos
         assertEquals(60, repos.repos.size)
         assertEquals(RepoSort.Updated to 2, repoRepository.requests.last())
+    }
+
+    @Test
+    fun `プロフィールがレート制限で取れなかった後にサインインしたら、すべて読み込み直す`() = runTest {
+        userRepository.nextError = GitHubException.RateLimited(resetAt = null)
+        repoRepository.popularError = GitHubException.RateLimited(resetAt = null)
+        val viewModel = createViewModel()
+        assertTrue(viewModel.uiState.value.canSignIn)
+        assertTrue(viewModel.uiState.value.profile is ProfileState.Failed)
+
+        repoRepository.popularError = null
+        authRepository.signIn()
+
+        val state = viewModel.uiState.value
+        assertEquals(ProfileState.Success(user), state.profile)
+        assertTrue(state.popularRepos is PopularReposState.Success)
+        assertFalse(state.canSignIn)
+    }
+
+    @Test
+    fun `人気のリポジトリだけ取れなかったときは、サインインしたらそれだけ読み込み直す`() = runTest {
+        repoRepository.popularError = GitHubException.RateLimited(resetAt = null)
+        val viewModel = createViewModel()
+        assertEquals(PopularReposState.Unavailable, viewModel.uiState.value.popularRepos)
+        val requestsBefore = repoRepository.requests.size
+
+        repoRepository.popularError = null
+        authRepository.signIn()
+
+        assertTrue(viewModel.uiState.value.popularRepos is PopularReposState.Success)
+        assertEquals(requestsBefore, repoRepository.requests.size)
     }
 }

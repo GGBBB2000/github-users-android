@@ -13,20 +13,21 @@
 | `:core:data` | Android ライブラリ | Repository の定義と実装、API のレスポンス型からデータ型への変換、エラー型への変換 |
 | `:core:designsystem` | Android ライブラリ（Compose） | M3 テーマ（ライト／ダーク）、共通部品（検索欄、スケルトン、状態表示など） |
 | `:core:ui` | Android ライブラリ（Compose） | データ型を使う共通 UI（頭文字入りの丸に切り替わるアバター、数値・日付の表示、エラーメッセージ、Custom Tabs で開く処理など） |
-| `:core:datastore` | Android ライブラリ | （未実装）暗号化したアクセストークンの保存。DataStore と Tink を使う |
+| `:core:datastore` | Android ライブラリ | 暗号化したサインイン情報（アクセストークンなど）の保存。DataStore と Tink を使う |
 | `:core:testing` | Android ライブラリ | テスト用の偽の Repository、テスト用のデータ、`MainDispatcherRule` など |
 | `:feature:userlist` | 機能モジュール | ユーザー一覧（リストペイン）の画面と ViewModel、遷移先の型 `UserListNavKey` と画面の登録処理 |
 | `:feature:userdetail` | 機能モジュール | ユーザー詳細（詳細ペイン）の画面と ViewModel、遷移先の型 `UserDetailNavKey` と画面の登録処理 |
-| `:feature:signin` | 機能モジュール | （未実装）Device Flow のサインイン画面と ViewModel、遷移先の型 `SignInNavKey` と画面の登録処理 |
+| `:feature:signin` | 機能モジュール | Device Flow のサインイン画面と ViewModel、遷移先の型 `SignInNavKey` と画面の登録処理 |
 
 ### 依存の向き
 
 ```
 app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
+            │              └──────▶ core:datastore
             └──────▶ core:ui ─▶ core:designsystem
 ```
 
-- 機能モジュールどうしは依存しない。一覧と詳細をつなぐのは `:app` の役割
+- 機能モジュールどうしは依存しない。一覧・詳細・サインインをつなぐのは `:app` の役割
 - `:core:model` は Android に依存しない Kotlin だけのモジュールにする
 - 機能モジュールは API のレスポンス型を直接使わない。`:core:data` が返すデータ型だけを使う
 
@@ -77,7 +78,7 @@ app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
 
 - `minSdk = 26`。ダイナミックカラーは Android 12 以降だけで使い、それより前は M3 の標準テーマにする
 
-### 認証：GitHub の Device Flow（未実装）
+### 認証：GitHub の Device Flow
 
 UI は [DESIGN.md の「3. サインイン」](design/DESIGN.md) を参照。サインインは任意で、しなくてもすべての機能を使える。
 
@@ -107,13 +108,14 @@ UI は [DESIGN.md の「3. サインイン」](design/DESIGN.md) を参照。サ
 
 | モジュール | 追加するもの |
 |---|---|
-| `:core:model` | `AuthState`（`SignedOut` / `SignedIn(login, avatarUrl)`）、`DeviceCode`（`userCode`、`verificationUri`、`expiresAt`、`interval`）、`DeviceAuthorizationResult`（`Authorized` / `Expired` / `Denied`）。`GitHubException` に Device Flow の設定エラー用の型を追加 |
-| `:core:network` | `GitHubOAuthApi`（`https://github.com/` 向け。form 形式の POST、`Accept: application/json`）、`AuthInterceptor`、`TokenAuthenticator`、トークンを受け取るためのインターフェース `AuthTokenProvider` |
-| `:core:datastore`（新規） | 暗号化したトークンの保存（下の「保存」を参照） |
-| `:core:data` | `AuthRepository`（サインインの状態、Device Flow、サインアウト）と、`AuthTokenProvider` の実装 |
-| `:feature:signin`（新規） | サインイン画面と ViewModel、`SignInNavKey` |
-| `:feature:userlist`、`:feature:userdetail` | メニューの「サインイン／サインアウト」、レート制限のときのサインインへの導線 |
-| `:app` | `SignInNavKey` の登録、`DialogSceneStrategy` の追加、Snackbar の一本化（下の「Snackbar」を参照） |
+| `:core:model` | `AuthState`（`SignedOut` / `SignedIn(login, avatarUrl)`）、`DeviceCode`、`DeviceAuthorizationResult`（`Authorized` / `Expired` / `Denied`）。`GitHubException.OAuth`（GitHub App の設定の誤りなど） |
+| `:core:network` | `GitHubOAuthApi`（`https://github.com/` 向け。form 形式の POST、`Accept: application/json`）、`AuthInterceptor`、`TokenAuthenticator`、トークンを受け取るためのインターフェース `AuthTokenProvider`、`GitHubOAuthConfig`（Client ID） |
+| `:core:datastore` | `AuthSessionStore`（暗号化したサインイン情報の保存。下の「保存」を参照） |
+| `:core:data` | `AuthRepository`（サインインの状態、Device Flow、サインアウト）と、`AuthSessionManager`（`AuthTokenProvider` の実装。トークンの保持と更新） |
+| `:core:ui` | `GitHubErrorState`（レート制限のときにサインインを勧める表示）、`ShowSnackbar` |
+| `:feature:signin` | サインイン画面と `SignInViewModel`、`SignInNavKey` |
+| `:feature:userlist`、`:feature:userdetail` | メニューの「サインイン／サインアウト」、レート制限のときのサインインへの導線、サインイン後の再読み込み |
+| `:app` | `SignInNavKey` の登録、`DialogSceneStrategy` の追加、Snackbar の一本化（下の「Snackbar」を参照）、自動サインアウトの通知 |
 | `:core:testing` | `FakeAuthRepository` |
 
 依存の向きは今と同じで、`:core:network` は `:core:datastore` に依存しない。`:core:data` が両方を使い、`AuthTokenProvider` を実装して Hilt で `:core:network` に渡す。
@@ -126,11 +128,12 @@ core:data ─▶ core:network（AuthTokenProvider を定義）
 #### 通信
 - OkHttpClient を 2 つに分ける。共通の設定（ログ）を持つ元のクライアントから `newBuilder()` で作り、接続プールは共有する
   - API 用（`api.github.com`）：HTTP キャッシュ、`GitHubHeadersInterceptor`、`AuthInterceptor`、`TokenAuthenticator`
-  - OAuth 用（`github.com`）：キャッシュも認証ヘッダーも付けない
+  - OAuth 用（`github.com`）：キャッシュも認証ヘッダーも付けない。トークンの更新は API の通信を止めたまま行うので、`Dispatcher` は API 用と分ける
 - `AuthInterceptor`
   - `AuthTokenProvider` がメモリに持っているトークンを `Authorization: Bearer` で付ける。通信のたびに DataStore を読まない
   - ホストが `api.github.com` のときだけ付ける（アバター画像など別のホストにトークンを送らない。Coil は別のクライアントを使う）
-  - 有効期限まで 5 分を切っていたら、先に更新する
+  - 有効期限まで 5 分を切っていたら、先に更新する（`AuthSessionManager.accessToken()`）
+  - 呼び出し側が自分でヘッダーを付けたリクエスト（`ExplicitAuthorization` のタグ付き）には手を出さない。サインインの直後、保存前のトークンで `GET /user` を呼ぶときに使う
 - `TokenAuthenticator`（OkHttp の `Authenticator`。401 のときに呼ばれる）
   - GitHub は、無効なトークンを付けると公開 API でも 401 を返す。対処しないと、ユーザーが GitHub 側で許可を取り消しただけでアプリが使えなくなる
   - リフレッシュトークンがあれば更新して、新しいトークンでやり直す
@@ -145,14 +148,17 @@ core:data ─▶ core:network（AuthTokenProvider を定義）
 #### 保存：DataStore と Tink
 - `androidx.security:security-crypto`（`EncryptedSharedPreferences`）は非推奨になった。代わりに `androidx.datastore:datastore-tink`（1.3.0 で安定版）の `AeadSerializer` を使う
   - Tink は Google が管理している。鍵は `AndroidKeysetManager` で作り、マスター鍵は Android Keystore に置く
-  - 保存する中身は kotlinx.serialization の JSON（`accessToken`、`accessTokenExpiresAt`、`refreshToken`、`refreshTokenExpiresAt`、`login`、`avatarUrl`）
-- 復号できないとき（バックアップから戻したときなど、Keystore の鍵は移らない）は、`CorruptionHandler` で空にして未ログインとして扱う。アプリは落とさない
-- バックアップの対象外にする。今の設定で `files/`（DataStore）は外れている。Tink の鍵を置く SharedPreferences（`sharedpref`）も外す
+  - 保存する中身は kotlinx.serialization の JSON（`accessToken`、`accessTokenExpiresAt`、`refreshToken`、`refreshTokenExpiresAt`、`login`、`avatarUrl`）。ファイル名を AEAD の関連データにして、別のファイルの暗号文と入れ替えられても復号できないようにする
+  - 鍵の準備（Keystore へのアクセス）は時間がかかることがあるので、最初に読み書きするとき（DataStore の IO スレッド）まで遅らせる
+- 復号できないとき（バックアップから戻したときなど、Keystore の鍵は移らない）は、`ReplaceFileCorruptionHandler` で空にして未ログインとして扱う。アプリは落とさない。鍵そのものを読めないときは、鍵を作り直す
+- バックアップの対象外にする。`files/`（DataStore）と、Tink の鍵を置く SharedPreferences（`githubusers_auth_keyset.xml`）を外す
+- `AuthSession.toString()` はトークンを含めない（ログに出ても漏れないように）
 
 #### Device Flow の問い合わせ
 - 間隔を守って問い合わせ続ける処理は `AuthRepository.awaitAuthorization(deviceCode)` に置く。`slow_down` で間隔を延ばし、期限が来たら `Expired` を返す。一時的な通信エラーでは止めず、次の間隔で再試行する
 - `delay` と時計を差し替えられるようにして、`runTest` の仮想時間でテストする
 - `SignInViewModel` は `DeviceCode` を `SavedStateHandle` に保存する。回転やプロセスの終了の後も、期限内なら同じコードで問い合わせを再開する
+  - `device_code` は最長 15 分で無効になり、`client_id` と組み合わせてもユーザーが許可しない限りトークンは取れないので、`SavedStateHandle` に置いてよいと判断した。結果が出たら（成功・期限切れ・拒否・失敗）すぐに消す
 - ブラウザを開いている間も、プロセスが生きていれば問い合わせを続ける（ViewModel のスコープ）。WorkManager などは使わない（最長 15 分なので不要）
 
 #### 画面のつなぎ方
@@ -161,8 +167,9 @@ core:data ─▶ core:network（AuthTokenProvider を定義）
 - 一覧と詳細には、`:app` から `onSignInClick` を渡す（機能どうしは依存しない）
 
 #### Snackbar
-- 今は一覧の画面が自分で `SnackbarHostState` を持っている。サインインの結果や自動サインアウトは、どの画面にいても出す必要がある
-- NiA と同じように、`:app` が `SnackbarHostState` を 1 つ持ち、各画面には `onShowSnackbar(message, actionLabel): Boolean` を渡す形に変える
+- サインインの結果や自動サインアウトは、どの画面にいても（サインイン画面を閉じた後も）出す必要がある
+- NiA と同じように、`:app` が `SnackbarHostState` を 1 つ持ち、各画面には `ShowSnackbar`（`suspend (message, actionLabel) -> Boolean`）を渡す
+- サインイン画面の「コードをコピーしました」（Android 12 以前だけ）は、ダイアログの中に出す必要があるので、サインイン画面が自分で持つ
 
 #### サインアウト
 - 端末のトークンと HTTP キャッシュを消す
@@ -171,7 +178,7 @@ core:data ─▶ core:network（AuthTokenProvider を定義）
 #### テスト
 - `:core:network`：MockWebServer で、HTTP 200 で返るエラーの読み取り、`AuthInterceptor` がヘッダーを付けること（別ホストには付けないこと）、`TokenAuthenticator` の更新とヘッダーなしでのやり直し、やり直しが 1 回までであること
 - `:core:data`：`awaitAuthorization` の `authorization_pending`、`slow_down`、期限切れ、拒否、一時的な通信エラー。同時に 401 が返ったときに更新が 1 回だけ行われること
-- `:core:datastore`：保存と読み出し、復号できないときに空になること（Robolectric は使わず、`AeadSerializer` に Tink の鍵を直接渡す JVM テストにする）
+- `:core:datastore`：暗号化して読み戻せること、別の鍵や別のファイルの暗号文は壊れたデータとして扱うこと（Robolectric は使わず、Tink の鍵を直接作る JVM テストにする）
 - `:feature:signin`：ViewModel の状態の切り替わり、`SavedStateHandle` からの再開
 
 ### エラーの扱い
@@ -179,6 +186,7 @@ core:data ─▶ core:network（AuthTokenProvider を定義）
 - `:core:data` は API の例外（`HttpException`、`IOException` など）を `GitHubException` に変換して投げる
   - 403 / 429 で `x-ratelimit-remaining: 0`（または `retry-after` あり）なら `RateLimited`。`x-ratelimit-reset` から解除時刻を読み取る
   - 404 は `NotFound`、通信できないときは `Network`
+  - Device Flow で想定していないエラー（`device_flow_disabled` など）は `OAuth`
 - `GitHubException` は画面でも使うので `:core:model` に置く。表示する文言は `:core:ui` の `errorMessage()` で作る
 
 ### 人気なリポジトリとスター順：Search API を使う

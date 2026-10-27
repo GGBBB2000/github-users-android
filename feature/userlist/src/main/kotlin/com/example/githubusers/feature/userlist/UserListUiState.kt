@@ -1,5 +1,6 @@
 package com.example.githubusers.feature.userlist
 
+import com.example.githubusers.core.model.AuthState
 import com.example.githubusers.core.model.GitHubException
 import com.example.githubusers.core.model.User
 
@@ -15,8 +16,14 @@ data class UserListUiState(
     val isRefreshing: Boolean = false,
     /** null でなければ、レート制限の Snackbar を出す */
     val rateLimitNotice: GitHubException.RateLimited? = null,
+    val authState: AuthState = AuthState.SignedOut,
+    /** GitHub App の設定があり、サインインできるか */
+    val isSignInAvailable: Boolean = false,
 ) {
     val isFiltering: Boolean get() = query.isNotBlank()
+
+    /** サインインの入口を出すか */
+    val canSignIn: Boolean get() = isSignInAvailable && authState is AuthState.SignedOut
 }
 
 sealed interface InitialLoad {

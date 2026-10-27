@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_signin_title">GitHub にサインイン</string>
+    <string name="feature_signin_close">閉じる</string>
+    <string name="feature_signin_instruction">GitHub のページで次のコードを入力して、アクセスを許可してください。</string>
+    <string name="feature_signin_code_loading">コードを取得中</string>
+    <string name="feature_signin_copy">コードをコピー</string>
+    <string name="feature_signin_copied">コードをコピーしました</string>
+    <string name="feature_signin_open_github">GitHub を開く</string>
+    <string name="feature_signin_other_device">パソコンなど別の端末で %1$s を開いて入力することもできます</string>
+    <string name="feature_signin_waiting">許可されるのを待っています…</string>
+    <string name="feature_signin_expires_in">コードの有効期限：あと %1$d 分</string>
+    <string name="feature_signin_note">このアプリが受け取るのは公開情報の読み取り権限だけです。</string>
+    <string name="feature_signin_hyphen">ハイフン</string>
+    <string name="feature_signin_expired_title">コードの有効期限が切れました</string>
+    <string name="feature_signin_expired_message">もう一度コードを取得して、最初からやり直してください。</string>
+    <string name="feature_signin_expired_action">新しいコードを取得</string>
+    <string name="feature_signin_denied_title">アクセスが許可されませんでした</string>
+    <string name="feature_signin_denied_message">GitHub のページでアクセスが拒否されました。</string>
+    <string name="feature_signin_denied_action">もう一度試す</string>
+    <string name="feature_signin_code_failed_title">コードを取得できませんでした</string>
+    <string name="feature_signin_failed_title">サインインできませんでした</string>
+    <string name="feature_signin_retry">再試行</string>
+</resources>

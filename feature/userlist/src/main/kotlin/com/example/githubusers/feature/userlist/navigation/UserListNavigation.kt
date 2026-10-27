@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.example.githubusers.core.model.User
+import com.example.githubusers.core.ui.ShowSnackbar
 import com.example.githubusers.feature.userlist.UserListScreen
 import kotlinx.serialization.Serializable
 
@@ -24,10 +25,13 @@ private val ListPaneWidth = 400.dp
  * @param selectedLogin 2ペイン表示で選択中のユーザー
  * @param isTwoPane 2ペイン表示か（選択中の行のハイライトとシェブロンの表示を切り替える）
  * @param detailPlaceholder 2ペイン表示でユーザーを選んでいないときの詳細ペイン
+ * @param onSignInClick サインインの入口（メニュー、レート制限の表示）を押したとき
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.userListEntry(
     onUserClick: (User) -> Unit,
+    onSignInClick: () -> Unit,
+    onShowSnackbar: ShowSnackbar,
     selectedLogin: String?,
     isTwoPane: Boolean,
     detailPlaceholder: @Composable ThreePaneScaffoldScope.() -> Unit,
@@ -38,6 +42,8 @@ fun EntryProviderScope<NavKey>.userListEntry(
     ) {
         UserListScreen(
             onUserClick = onUserClick,
+            onSignInClick = onSignInClick,
+            onShowSnackbar = onShowSnackbar,
             selectedLogin = if (isTwoPane) selectedLogin else null,
             showChevron = !isTwoPane,
         )

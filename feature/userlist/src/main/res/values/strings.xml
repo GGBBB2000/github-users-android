@@ -13,4 +13,14 @@
     <string name="feature_userlist_no_match">「%1$s」に一致するユーザーはいません</string>
     <string name="feature_userlist_end">すべてのユーザーを読み込みました</string>
     <string name="feature_userlist_empty">ユーザーがいません</string>
+    <string name="feature_userlist_sign_in">GitHub にサインイン</string>
+    <string name="feature_userlist_signed_in_as">\@%1$s でサインイン中</string>
+    <string name="feature_userlist_sign_out">サインアウト</string>
+    <string name="feature_userlist_sign_out_title">サインアウトしますか？</string>
+    <string name="feature_userlist_sign_out_message">この端末に保存しているアクセストークンを削除します。</string>
+    <string name="feature_userlist_cancel">キャンセル</string>
+    <string name="feature_userlist_signed_out">サインアウトしました</string>
+    <string name="feature_userlist_github_settings">GitHub の設定</string>
+    <string name="feature_userlist_rate_limit_sign_in">API の利用上限に達しました。サインインすると上限が増えます</string>
+    <string name="feature_userlist_sign_in_action">サインイン</string>
 </resources>

@@ -14,7 +14,8 @@ fun errorMessage(error: GitHubException): String = when (error) {
     is GitHubException.Network -> stringResource(R.string.core_ui_error_network)
     is GitHubException.RateLimited -> rateLimitMessage(error.resetAt)
     is GitHubException.NotFound -> stringResource(R.string.core_ui_error_not_found)
-    is GitHubException.Http, is GitHubException.Unexpected -> stringResource(R.string.core_ui_error_other)
+    is GitHubException.Http, is GitHubException.OAuth, is GitHubException.Unexpected ->
+        stringResource(R.string.core_ui_error_other)
 }
 
 /** レート制限に達したときのメッセージ。解除時刻がわかればそれも表示する。 */
@@ -26,5 +27,5 @@ fun rateLimitMessage(resetAt: Instant?): String =
         stringResource(R.string.core_ui_error_rate_limit)
     }
 
-private fun formatTime(time: Instant): String =
+internal fun formatTime(time: Instant): String =
     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(time.atZone(ZoneId.systemDefault()))

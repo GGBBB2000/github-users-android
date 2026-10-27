@@ -19,12 +19,14 @@ import com.example.githubusers.core.ui.rememberExternalActions
  *
  * @param isTwoPane 2ペイン表示か
  * @param onBack 1ペイン表示で戻るボタンを押したとき
+ * @param onSignInClick レート制限の表示でサインインを押したとき
  */
 @Composable
 fun UserDetailScreen(
     login: String,
     isTwoPane: Boolean,
     onBack: () -> Unit,
+    onSignInClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // 画面（NavEntry）ごとに ViewModel を持つので、画面を閉じると ViewModel も破棄される
@@ -36,6 +38,7 @@ fun UserDetailScreen(
     val callbacks = UserDetailCallbacks(
         onBack = onBack,
         onRetry = viewModel::retry,
+        onSignIn = onSignInClick,
         onSortChange = viewModel::onSortChange,
         onLoadMoreRepos = viewModel::loadMoreRepos,
         onRetryRepos = viewModel::retryRepos,
@@ -57,6 +60,7 @@ private val ExpandedLayoutMinWidth = 640.dp
 internal data class UserDetailCallbacks(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
+    val onSignIn: () -> Unit,
     val onSortChange: (RepoSort) -> Unit,
     val onLoadMoreRepos: () -> Unit,
     val onRetryRepos: () -> Unit,

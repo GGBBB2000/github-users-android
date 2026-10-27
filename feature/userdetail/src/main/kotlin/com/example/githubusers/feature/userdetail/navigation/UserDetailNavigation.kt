@@ -15,13 +15,20 @@ data class UserDetailNavKey(val login: String) : NavKey
  * ユーザー詳細を、リスト・詳細レイアウトの詳細ペインとして登録する。
  *
  * @param isTwoPane 2ペイン表示か
+ * @param onSignInClick レート制限の表示でサインインを押したとき
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.userDetailEntry(
     isTwoPane: Boolean,
     onBack: () -> Unit,
+    onSignInClick: () -> Unit,
 ) {
     entry<UserDetailNavKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-        UserDetailScreen(login = key.login, isTwoPane = isTwoPane, onBack = onBack)
+        UserDetailScreen(
+            login = key.login,
+            isTwoPane = isTwoPane,
+            onBack = onBack,
+            onSignInClick = onSignInClick,
+        )
     }
 }

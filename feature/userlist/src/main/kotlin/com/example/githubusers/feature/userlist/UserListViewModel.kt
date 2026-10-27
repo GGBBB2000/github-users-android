@@ -3,7 +3,9 @@ package com.example.githubusers.feature.userlist
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.githubusers.core.data.repository.AuthRepository
 import com.example.githubusers.core.data.repository.UserRepository
+import com.example.githubusers.core.model.AuthState
 import com.example.githubusers.core.model.GitHubException
 import com.example.githubusers.core.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,18 +24,21 @@ import javax.inject.Inject
  *
  * `/users` には検索機能がないので、読み込み済みのユーザーを手元で絞り込む。
  * 追加の読み込みは、最後に読み込んだユーザーの ID を `since` に渡して行う。
+ * レート制限で失敗した後にサインインしたら、失敗した読み込みをやり直す。
  */
 @HiltViewModel
 class UserListViewModel @Inject constructor(
     private val userRepository: UserRepository,
+    private val authRepository: AuthRepository,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val query = savedStateHandle.getStateFlow(KEY_QUERY, "")
     private val pages = MutableStateFlow(PagesState())
+    private val authState = MutableStateFlow<AuthState>(AuthState.SignedOut)
     private var loadJob: Job? = null
 
-    val uiState: StateFlow<UserListUiState> = combine(pages, query) { pages, query ->
+    val uiState: StateFlow<UserListUiState> = combine(pages, query, authState) { pages, query, authState ->
         UserListUiState(
             query = query,
             users = pages.users.filterBy(query),
@@ -42,11 +47,34 @@ class UserListViewModel @Inject constructor(
             append = pages.append,
             isRefreshing = pages.isRefreshing,
             rateLimitNotice = pages.rateLimitNotice,
+            authState = authState,
+            isSignInAvailable = authRepository.isSignInAvailable,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UserListUiState())
 
     init {
         loadFirstPage(refreshing = false)
+        viewModelScope.launch {
+            var previous: AuthState? = null
+            authRepository.authState.collect { state ->
+                authState.value = state
+                if (previous is AuthState.SignedOut && state is AuthState.SignedIn) onSignedIn()
+                previous = state
+            }
+        }
+    }
+
+    /** サインアウトする。終わるのを待たずに Snackbar を出してよい（端末内の処理だけなので）。 */
+    fun signOut() {
+        viewModelScope.launch { authRepository.signOut() }
+    }
+
+    /** レート制限で失敗していた読み込みを、サインインした後にやり直す。 */
+    private fun onSignedIn() {
+        val current = pages.value
+        val initialError = (current.initialLoad as? InitialLoad.Failed)?.error
+        val appendError = (current.append as? AppendState.Failed)?.error
+        if (initialError is GitHubException.RateLimited || appendError is GitHubException.RateLimited) retry()
     }
 
     fun onQueryChange(query: String) {

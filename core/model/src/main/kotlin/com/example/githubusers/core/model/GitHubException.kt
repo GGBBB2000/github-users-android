@@ -15,6 +15,13 @@ sealed class GitHubException(message: String, cause: Throwable? = null) : Except
     /** 通信できなかった（オフライン、タイムアウトなど）。 */
     class Network(cause: Throwable) : GitHubException("Network error", cause)
 
+    /**
+     * OAuth（Device Flow）のエラー。GitHub App の設定の誤り（`device_flow_disabled` など）で起きる。
+     *
+     * @param error GitHub が返した `error` の値
+     */
+    class OAuth(val error: String) : GitHubException("OAuth error: $error")
+
     /** その他の HTTP エラー。 */
     class Http(val code: Int, cause: Throwable? = null) : GitHubException("HTTP $code", cause)
 

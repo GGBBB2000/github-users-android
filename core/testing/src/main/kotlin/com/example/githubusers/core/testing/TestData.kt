@@ -1,6 +1,7 @@
 package com.example.githubusers.core.testing
 
 import com.example.githubusers.core.model.AccountType
+import com.example.githubusers.core.model.DeviceCode
 import com.example.githubusers.core.model.Repo
 import com.example.githubusers.core.model.User
 import com.example.githubusers.core.model.UserDetail
@@ -48,5 +49,16 @@ object TestData {
         forksCount = 0,
         updatedAt = Instant.parse("2026-01-01T00:00:00Z"),
         isFork = false,
+    )
+
+    fun deviceCode(
+        userCode: String = "WDJB-MJHT",
+        expiresAt: Instant = Instant.parse("2100-01-01T00:00:00Z"),
+    ) = DeviceCode(
+        deviceCode = "device-code-$userCode",
+        userCode = userCode,
+        verificationUri = "https://github.com/login/device",
+        expiresAt = expiresAt,
+        intervalSeconds = 5,
     )
 }

@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 fun SkeletonBlock(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(6.dp),
+    color: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
 ) {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val alpha by transition.animateFloat(
@@ -32,6 +34,6 @@ fun SkeletonBlock(
     Box(
         modifier
             .graphicsLayer { this.alpha = alpha }
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest, shape),
+            .background(color, shape),
     )
 }

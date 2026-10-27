@@ -29,6 +29,7 @@ GitHub の User API を使ってユーザーの一覧と詳細を表示する An
 - 通信：Retrofit + OkHttp（HTTP キャッシュ）+ kotlinx.serialization
 - 画像：Coil 3（`rememberAsyncImagePainter` + `Image`）
 - ブラウザ：androidx.browser（Custom Tabs）
+- 認証：GitHub App の Device Flow。トークンは DataStore と Tink（`datastore-tink`）で暗号化して保存
 - テスト：JUnit 4、kotlinx-coroutines-test、Turbine、MockWebServer
 - ビルド：AGP 9（Kotlin は AGP に組み込みのものを使う）、Gradle のバージョンカタログ、`build-logic` の共通設定
 - `compileSdk` / `targetSdk` 37、`minSdk` 26
@@ -48,8 +49,8 @@ GitHub の User API を使ってユーザーの一覧と詳細を表示する An
 
 ## ディレクトリ
 
-- `app/` … アプリ本体（一覧と詳細の組み立て）
-- `core/` … 共通モジュール（model / network / data / designsystem / ui / testing）
-- `feature/` … 画面ごとの機能モジュール（userlist / userdetail）
+- `app/` … アプリ本体（一覧・詳細・サインインの組み立て）
+- `core/` … 共通モジュール（model / network / data / datastore / designsystem / ui / testing）
+- `feature/` … 画面ごとの機能モジュール（userlist / userdetail / signin）
 - `build-logic/` … Gradle の共通設定（convention plugin）
 - `docs/design/` … デザイン仕様とモックアップ

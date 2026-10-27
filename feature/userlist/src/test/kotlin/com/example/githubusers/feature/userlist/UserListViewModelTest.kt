@@ -1,7 +1,9 @@
 package com.example.githubusers.feature.userlist
 
 import androidx.lifecycle.SavedStateHandle
+import com.example.githubusers.core.model.AuthState
 import com.example.githubusers.core.model.GitHubException
+import com.example.githubusers.core.testing.FakeAuthRepository
 import com.example.githubusers.core.testing.FakeUserRepository
 import com.example.githubusers.core.testing.MainDispatcherRule
 import com.example.githubusers.core.testing.TestData
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -22,7 +25,9 @@ class UserListViewModelTest {
 
     private val repository = FakeUserRepository(users = TestData.users(1L..25L), pageSize = 10)
 
-    private fun createViewModel() = UserListViewModel(repository, SavedStateHandle())
+    private val authRepository = FakeAuthRepository()
+
+    private fun createViewModel() = UserListViewModel(repository, authRepository, SavedStateHandle())
 
     /** uiState は購読している間だけ更新されるので、購読してから最新の値を返す。 */
     private suspend fun UserListViewModel.state(): UserListUiState = uiState.first()
@@ -123,5 +128,63 @@ class UserListViewModelTest {
         assertEquals(InitialLoad.Loaded, state.initialLoad)
         assertEquals(10, state.users.size)
         assertEquals(false, state.isRefreshing)
+    }
+
+    @Test
+    fun `未ログインでサインインの設定があれば、サインインの入口を出す`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        assertTrue(viewModel.state().canSignIn)
+
+        authRepository.signIn("octocat")
+        val state = viewModel.state()
+        assertEquals(AuthState.SignedIn("octocat", null), state.authState)
+        assertFalse(state.canSignIn)
+    }
+
+    @Test
+    fun `Client ID が設定されていなければ、サインインの入口を出さない`() = runTest {
+        authRepository.isSignInAvailable = false
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        assertFalse(viewModel.state().canSignIn)
+    }
+
+    @Test
+    fun `初回の読み込みがレート制限で失敗した後にサインインしたら、読み込み直す`() = runTest {
+        repository.nextError = GitHubException.RateLimited(resetAt = null)
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        assertTrue(viewModel.state().initialLoad is InitialLoad.Failed)
+
+        authRepository.signIn()
+
+        assertEquals(InitialLoad.Loaded, viewModel.state().initialLoad)
+        assertEquals(listOf<Long?>(null, null), repository.requestedSince)
+    }
+
+    @Test
+    fun `通信エラーで失敗しているときは、サインインしても読み込み直さない`() = runTest {
+        repository.nextError = GitHubException.Network(IOException())
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        authRepository.signIn()
+
+        assertTrue(viewModel.state().initialLoad is InitialLoad.Failed)
+        assertEquals(1, repository.requestedSince.size)
+    }
+
+    @Test
+    fun `サインアウトする`() = runTest {
+        authRepository.signIn()
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        viewModel.signOut()
+
+        assertEquals(1, authRepository.signOutCount)
+        assertEquals(AuthState.SignedOut, viewModel.state().authState)
     }
 }

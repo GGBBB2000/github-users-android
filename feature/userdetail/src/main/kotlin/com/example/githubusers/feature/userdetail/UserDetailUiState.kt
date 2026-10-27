@@ -10,6 +10,8 @@ data class UserDetailUiState(
     val profile: ProfileState = ProfileState.Loading,
     val popularRepos: PopularReposState = PopularReposState.Loading,
     val repos: RepoListState = RepoListState(),
+    /** サインインの入口を出せるか（未ログインで、サインインの設定がある） */
+    val canSignIn: Boolean = false,
 )
 
 sealed interface ProfileState {

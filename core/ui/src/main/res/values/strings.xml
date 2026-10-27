@@ -30,4 +30,8 @@
     <string name="core_ui_error_rate_limit_with_time">API の利用上限に達しました。%1$s ごろに再試行してください。</string>
     <string name="core_ui_error_not_found">ユーザーが見つかりませんでした。</string>
     <string name="core_ui_error_other">時間をおいて、もう一度お試しください。</string>
+    <string name="core_ui_error_rate_limit_title">API の利用上限に達しました</string>
+    <string name="core_ui_error_rate_limit_sign_in">サインインすると上限が 1 時間 5,000 回に増えます。サインインしない場合は、しばらく待ってから再試行してください。</string>
+    <string name="core_ui_error_rate_limit_sign_in_with_time">サインインすると上限が 1 時間 5,000 回に増えます。サインインしない場合は %1$s 以降に再試行できます。</string>
+    <string name="core_ui_sign_in">GitHub にサインイン</string>
 </resources>

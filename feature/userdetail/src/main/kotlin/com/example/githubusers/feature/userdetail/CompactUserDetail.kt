@@ -42,17 +42,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.githubusers.core.designsystem.component.ErrorState
 import com.example.githubusers.core.designsystem.component.SkeletonBlock
 import com.example.githubusers.core.designsystem.icon.GuIcons
 import com.example.githubusers.core.designsystem.theme.GuShapes
 import com.example.githubusers.core.model.UserDetail
 import com.example.githubusers.core.ui.ExternalActions
+import com.example.githubusers.core.ui.GitHubErrorState
 import com.example.githubusers.core.ui.UserAvatar
-import com.example.githubusers.core.ui.errorMessage
 import com.example.githubusers.core.ui.formatCount
 import com.example.githubusers.core.ui.label
-import com.example.githubusers.core.ui.R as CoreUiR
 
 /**
  * スマホ（1ペイン）の詳細画面。
@@ -103,10 +101,10 @@ internal fun CompactUserDetail(
             when (val profile = uiState.profile) {
                 ProfileState.Loading -> item { CompactSkeleton() }
                 is ProfileState.Failed -> item {
-                    ErrorState(
-                        title = stringResource(CoreUiR.string.core_ui_error_title),
-                        message = errorMessage(profile.error),
+                    GitHubErrorState(
+                        error = profile.error,
                         onRetry = callbacks.onRetry,
+                        onSignIn = if (uiState.canSignIn) callbacks.onSignIn else null,
                         modifier = Modifier.fillParentMaxSize(),
                     )
                 }

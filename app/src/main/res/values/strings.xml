@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GitHub Users</string>
+    <string name="signed_in_as">\@%1$s としてサインインしました</string>
+    <string name="session_expired">GitHub のアクセス許可が無効になったため、サインアウトしました</string>
+    <string name="sign_in_action">サインイン</string>
 </resources>

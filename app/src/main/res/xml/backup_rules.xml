@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 保存しているのは HTTP キャッシュだけなので、バックアップの対象にしない -->
+<!--
+  バックアップの対象にしないもの
+  - files/：HTTP キャッシュとサインイン情報（暗号化した DataStore）
+  - サインイン情報の暗号鍵（Tink の鍵）。鍵の鍵は Android Keystore にあり、別の端末には移らないので、移しても復号できない
+-->
 <full-backup-content>
     <exclude domain="file" path="." />
+    <exclude domain="sharedpref" path="githubusers_auth_keyset.xml" />
 </full-backup-content>

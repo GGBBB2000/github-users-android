@@ -2,8 +2,10 @@ package com.example.githubusers.feature.userdetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.githubusers.core.data.repository.AuthRepository
 import com.example.githubusers.core.data.repository.RepoRepository
 import com.example.githubusers.core.data.repository.UserRepository
+import com.example.githubusers.core.model.AuthState
 import com.example.githubusers.core.model.GitHubException
 import com.example.githubusers.core.model.RepoSort
 import dagger.assisted.Assisted
@@ -21,12 +23,14 @@ import kotlinx.coroutines.launch
  * ユーザー詳細。プロフィール、人気のリポジトリ、リポジトリ一覧を並行して読み込む。
  *
  * 表示するユーザーごとに別のインスタンスを作る（[Factory] で [login] を渡す）。
+ * レート制限で失敗した後にサインインしたら、失敗した読み込みをやり直す。
  */
 @HiltViewModel(assistedFactory = UserDetailViewModel.Factory::class)
 class UserDetailViewModel @AssistedInject constructor(
     @Assisted private val login: String,
     private val userRepository: UserRepository,
     private val repoRepository: RepoRepository,
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserDetailUiState(login = login))
@@ -36,6 +40,27 @@ class UserDetailViewModel @AssistedInject constructor(
 
     init {
         loadAll()
+        viewModelScope.launch {
+            var previous: AuthState? = null
+            authRepository.authState.collect { state ->
+                _uiState.update {
+                    it.copy(canSignIn = authRepository.isSignInAvailable && state is AuthState.SignedOut)
+                }
+                if (previous is AuthState.SignedOut && state is AuthState.SignedIn) onSignedIn()
+                previous = state
+            }
+        }
+    }
+
+    /** レート制限で失敗していた読み込みを、サインインした後にやり直す。 */
+    private fun onSignedIn() {
+        val state = _uiState.value
+        if ((state.profile as? ProfileState.Failed)?.error is GitHubException.RateLimited) {
+            loadAll()
+            return
+        }
+        if (state.popularRepos == PopularReposState.Unavailable) loadPopularRepos()
+        if (state.repos.error is GitHubException.RateLimited) retryRepos()
     }
 
     /** プロフィールの読み込みに失敗したとき。すべて読み込み直す。 */

@@ -5,8 +5,10 @@ import com.example.githubusers.core.network.model.NetworkRepoSearchResult
 import com.example.githubusers.core.network.model.NetworkUser
 import com.example.githubusers.core.network.model.NetworkUserDetail
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Tag
 
 /**
  * GitHub REST API の定義。
@@ -22,6 +24,17 @@ interface GitHubApi {
 
     @GET("users/{login}")
     suspend fun getUser(@Path("login") login: String): NetworkUserDetail
+
+    /**
+     * [authorization] のトークンの持ち主。サインインの直後、トークンを保存する前に呼ぶ。
+     *
+     * @param authorization `Bearer {token}`
+     */
+    @GET("user")
+    suspend fun getAuthenticatedUser(
+        @Header("Authorization") authorization: String,
+        @Tag tag: ExplicitAuthorization = ExplicitAuthorization,
+    ): NetworkUserDetail
 
     /**
      * @param sort `updated`、`full_name` など。スター順は API が対応していない
