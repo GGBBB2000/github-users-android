@@ -6,6 +6,7 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Business
@@ -13,17 +14,20 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.ForkRight
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.HourglassEmpty
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.StarOutline
@@ -54,6 +58,12 @@ object GuIcons {
     val Copy: ImageVector = Icons.Outlined.ContentCopy
     val Lock: ImageVector = Icons.Outlined.Lock
     val Contributions: ImageVector = Icons.Outlined.GridView
+
+    /** 端末上の AI が作った内容の目印。要約の入口と見出しだけに使う */
+    val Ai: ImageVector = Icons.Outlined.AutoAwesome
+    val Download: ImageVector = Icons.Outlined.Download
+    val Busy: ImageVector = Icons.Outlined.Schedule
+    val Info: ImageVector = Icons.Outlined.Info
     val Refresh: ImageVector = Icons.Outlined.Refresh
     val Check: ImageVector = Icons.Outlined.Check
     val Company: ImageVector = Icons.Outlined.Business

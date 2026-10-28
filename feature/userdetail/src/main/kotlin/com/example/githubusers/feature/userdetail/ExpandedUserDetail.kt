@@ -93,6 +93,11 @@ private fun LazyListScope.expandedContent(
             StatCard(user.publicGists, stringResource(R.string.feature_userdetail_public_gists), Modifier.weight(1f))
         }
     }
+    if (uiState.summary != SummaryState.Hidden) {
+        item(key = "summary") {
+            SummarySection(state = uiState.summary, isTablet = true, callbacks = callbacks.summary)
+        }
+    }
     item(key = "profileAndActivity") {
         val surface = MaterialTheme.colorScheme.surface
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {

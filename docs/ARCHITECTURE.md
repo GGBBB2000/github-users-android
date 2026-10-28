@@ -14,6 +14,7 @@
 | `:core:designsystem` | Android ライブラリ（Compose） | M3 テーマ（ライト／ダーク）、共通部品（検索欄、スケルトン、状態表示など） |
 | `:core:ui` | Android ライブラリ（Compose） | データ型を使う共通 UI（頭文字入りの丸に切り替わるアバター、数値・日付の表示、エラーメッセージ、Custom Tabs で開く処理など） |
 | `:core:datastore` | Android ライブラリ | 暗号化したサインイン情報（アクセストークンなど）の保存。DataStore と Tink を使う |
+| `:core:ai` | Android ライブラリ | 端末上の AI（ML Kit の Prompt API、Gemini Nano）による活動の要約。指示の組み立て、出力の確認、デモ用の実装 |
 | `:core:testing` | Android ライブラリ | テスト用の偽の Repository、テスト用のデータ、`MainDispatcherRule` など |
 | `:feature:userlist` | 機能モジュール | ユーザー一覧（リストペイン）の画面と ViewModel、遷移先の型 `UserListNavKey` と画面の登録処理 |
 | `:feature:userdetail` | 機能モジュール | ユーザー詳細（詳細ペイン）の画面と ViewModel、遷移先の型 `UserDetailNavKey` と画面の登録処理 |
@@ -23,7 +24,8 @@
 
 ```
 app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
-            │              └──────▶ core:datastore
+            │              ├──────▶ core:datastore
+            │              └──────▶ core:ai
             └──────▶ core:ui ─▶ core:designsystem
 ```
 
@@ -69,6 +71,7 @@ app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
 
 - NiA のような demo / prod の分割はしない
 - `:core:testing` の偽の Repository を UI テストとプレビューで使う
+- 例外として、端末上の AI だけは、debug ビルドでデモの実装に差し替えられるようにする（`githubusers.demoOnDeviceAi=true`）。エミュレーターには AICore がなく、要約の画面を確認できないため。release ビルドでは常に本物を使う（下の「活動の要約」を参照）
 
 ### パッケージ名と namespace：`com.example.githubusers`
 
@@ -205,6 +208,22 @@ core:data ─▶ core:network（AuthTokenProvider を定義）
 - `UserDetailViewModel` はサインインの状態を見て、サインインしたら読み込み、サインアウトしたら（401 による自動サインアウトを含む）サインインを勧める表示に戻す
 - POST なので HTTP キャッシュは効かない。詳細を開くたびに1回呼ぶ（GraphQL API の上限は REST API と別枠）
 - 描画は `Canvas` で行い、マス1つずつを Composable にしない（約 370 個）。タップは領域全体で受けて、指の位置から日を決める
+
+### 活動の要約：端末上の AI（ML Kit の Prompt API）で、数値はアプリで計算する
+
+- ML Kit GenAI の Prompt API（`com.google.mlkit:genai-prompt`、ベータ）で、AICore の Gemini Nano を使う。通信も費用もかからず、サーバーに何も送らない
+- 使える端末は一部（Pixel 9 以降、Galaxy S26 など）だけ。`checkStatus()` が `UNAVAILABLE` なら、要約に関する表示を一切出さない。端末名では判定しない
+- **数値は AI に作らせない**。連続日数・よく活動する曜日・よく使う言語などは `:core:data` の `activityFacts()` で計算し、画面と同じ表記（`1,269 件`、`24.1k`）に整える。AI には「この値だけを使って2〜3文にする」ことだけを頼む
+- 出力は `:core:ai` の `SummaryPrompt.validate()` で確かめる。文章の中の数（全角・3桁区切りをそろえる）が、渡した値とラベルと名前の中にすべてあること、ひらがな・カタカナが十分にあること（日本語であること）。通らなければ表示せず「要約を作れませんでした」にする。自動で作り直さない（回数の上限があるため）
+- 漢数字や、別々の値を結びつけた文（「9月に23日連続」など）は機械では見つけにくい。そのため、もとにした数値を画面に必ず出し、注記を付ける
+- 生成はユーザーが押したときだけ。AICore にはアプリごとの回数（`BUSY`）と1日の電池（`PER_APP_BATTERY_USE_QUOTA_EXCEEDED`）の上限があり、詳細を開くたびに作るとすぐ届く
+- 要約の材料は、詳細画面で読み込み済みのもの（プロフィール、リポジトリ一覧、人気なリポジトリ、草）を使い、要約のために API を呼び直さない。草とリポジトリの読み込みが終わるのを待ってから作る
+- `:core:ai` を `:core:data` から分けた理由：ML Kit（ベータ）への依存を1つのモジュールに閉じ込めるため。`:core:data` は `ActivitySummarizer` のインターフェースだけを使い、テストでは偽物に差し替える
+- 作った要約とモデルのダウンロードは `ActivitySummaryRepository`（シングルトン）が持つ。ダウンロードはアプリ全体のスコープ（`@ApplicationScope`）で動かし、画面を移っても続ける。要約はプロセスが続く間ログイン名ごとに覚え、開き直したら押さずに出す
+- ストリーミングはしない。数値の確認を通ってから出したいのと、TalkBack の読み上げを1回にするため
+- アプリが前面でなくなると AI は止まる（`BACKGROUND_USE_BLOCKED`）。これは中止と同じに扱い、エラーを出さない
+- 名前は利用者が自由に決められるので、指示に入れる前に改行を除き、長さを抑える。出力は画面に表示するだけで、ほかの処理には使わない
+- 対応端末と日本語の品質は、公式の資料に一覧がない。手元に対応端末がないので、実機での確認は別に行う。エミュレーターでは debug ビルドのデモの実装で画面を確かめる
 
 ### 一覧の絞り込み中は自動で追加読み込みしない
 

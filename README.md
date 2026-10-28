@@ -24,12 +24,28 @@ Kotlin・Jetpack Compose・Material 3 で作り、スマホでは1ペイン、�
 
 - プロフィール（名前、自己紹介、フォロワー数などの統計、所属・場所・ウェブサイト・メール・X）
 - アクティビティ（GitHub に登録した日、最終更新）
+- 活動の要約。端末上の AI で、活動を2〜3文の文章にまとめます（対応端末だけ。下の「活動の要約」を参照）
 - 草（過去1年間のコントリビューションのカレンダー）。マスをタップすると、その日の件数を表示します。サインインが必要です（下の「サインイン」を参照）
 - 人気なリポジトリ（スター数の多い上位3件）
 - リポジトリ一覧（更新順・スター順・名前順で並び替え、「さらに表示」で続きを表示）
 - GitHub のページを Custom Tabs で開く、プロフィールの URL を共有する
 
 <img src="docs/screenshots/phone_contributions.png" width="240" alt="草（コントリビューションのカレンダー）">
+
+### 活動の要約（端末上の AI）
+
+<img src="docs/screenshots/phone_summary.png" width="240" alt="AI による活動の要約">
+
+「要約を作る」を押すと、そのユーザーの活動を端末上の AI（ML Kit の Prompt API、Gemini Nano）で2〜3文にまとめます。通信も費用もかからず、データを外に送りません。
+
+- **数値は AI に作らせません**。連続日数・よく活動する曜日・よく使う言語などはアプリで計算し、AI にはその値を文章にすることだけを任せます
+- AI の出力に、渡していない数値が含まれていたり、日本語でなかったりしたときは表示しません
+- もとにした数値を文章と一緒に表示し、食い違っていないかを確かめられるようにしています
+- AI には回数と電池の上限があるので、自動では作らず、押したときだけ作ります。作った要約は、アプリを閉じるまで覚えておきます
+- 使える端末は一部（Pixel 9 以降など）だけです。対応していない端末では、要約に関するものを何も表示しません
+- 未ログインのときは、草を除いた値（プロフィールとリポジトリ）で要約します
+
+> スクリーンショットは、AICore のないエミュレーターで、AI の代わりにデモの実装（データから決まった形の文章を作る）を使って撮ったものです。下の「端末上の AI の確認」を参照してください。
 
 ### 画面の大きさとテーマ
 
@@ -73,6 +89,7 @@ Kotlin・Jetpack Compose・Material 3 で作り、スマホでは1ペイン、�
 | 通信 | Retrofit、OkHttp（HTTP キャッシュ）、kotlinx.serialization。草だけ GraphQL API |
 | 画像 | Coil 3 |
 | 保存 | DataStore、Tink（`datastore-tink`） |
+| 端末上の AI | ML Kit GenAI の Prompt API（Gemini Nano、ベータ） |
 | ブラウザ | androidx.browser（Custom Tabs） |
 | テスト | JUnit 4、kotlinx-coroutines-test、MockWebServer |
 | ビルド | AGP 9（組み込みの Kotlin）、Gradle のバージョンカタログ、`build-logic` の convention plugin |
@@ -86,7 +103,8 @@ Kotlin・Jetpack Compose・Material 3 で作り、スマホでは1ペイン、�
 
 ```
 app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
-            │              └──────▶ core:datastore
+            │              ├──────▶ core:datastore
+            │              └──────▶ core:ai
             └──────▶ core:ui ─▶ core:designsystem
 ```
 
@@ -97,6 +115,7 @@ app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
 | `:core:data` | Repository（API の呼び出し、エラーの変換、サインインの管理） |
 | `:core:network` | Retrofit・OkHttp の設定、認証ヘッダーの付与、レート制限ヘッダーの読み取り |
 | `:core:datastore` | 暗号化したサインイン情報の保存 |
+| `:core:ai` | 端末上の AI による要約（指示の組み立て、出力の確認） |
 | `:core:model` | データ型とエラーの型（Android に依存しない） |
 | `:core:designsystem` / `:core:ui` | テーマと共通の UI 部品 |
 | `:core:testing` | テスト用の偽の Repository とデータ |
@@ -109,6 +128,7 @@ app ─▶ feature:* ─▶ core:data ─▶ core:network ─▶ core:model
 - **草**：GraphQL API の `contributionCalendar` を使います。濃さは GitHub が決めた5段階をそのまま使い、色はテーマの `primary` の不透明度で表します（ライトでもダークでも「濃い＝多い」になるように）。スマホでは横スクロールにして、最初は最近の週を表示します
 - **2ペインでの戻る操作**：初期値の動作では、詳細を表示中に戻るとアプリが閉じてしまうため、詳細を閉じて未選択に戻すようにしています
 - **トークンの更新**：リフレッシュトークンは使うたびに変わるので、同時に複数の通信が 401 になっても、更新は1回にまとめています
+- **活動の要約**：小さいモデルは数字を間違えやすいので、数値はアプリで計算して AI には文章だけを書かせ、出力の数値を渡した値と照らし合わせます。ML Kit（ベータ）への依存は `:core:ai` に閉じ込めています
 
 詳しくは [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) を、UI の仕様は [docs/design/DESIGN.md](docs/design/DESIGN.md) を参照してください。
 
@@ -133,9 +153,20 @@ githubusers.oauthClientId=Iv23li...
 
 GitHub App は、「Enable Device Flow」をオンにし、権限は何も付けずに登録します。Client ID が空のときは、サインインの入口を表示しません。
 
+### 端末上の AI の確認
+
+活動の要約は、Gemini Nano に対応した実機（Pixel 9 以降など）でだけ動きます。エミュレーターでは要約のカードは表示されません。
+
+- **実機**：通常の debug ビルドを入れます。うまく動かないときは、`adb logcat -s OnDeviceAi` に ML Kit のエラーコードが出ます
+- **エミュレーター**：次のようにビルドすると、AI の代わりにデモの実装を使い、要約の画面を確認できます（debug ビルドだけ。release ビルドでは常に本物を使います）
+
+```bash
+./gradlew :app:assembleDebug -Pgithubusers.demoOnDeviceAi=true
+```
+
 ## テスト
 
-単体テストは 89 件です。
+単体テストは 126 件です。
 
 | 対象 | 主な内容 |
 |---|---|
@@ -144,6 +175,7 @@ GitHub App は、「Enable Device Flow」をオンにし、権限は何も付け
 | トークンの管理 | 期限前の更新、401 のときの更新とサインアウト、同時に 401 が返ったときに更新が1回だけ行われること |
 | 通信 | 認証ヘッダーを `api.github.com` だけに付けること、401 のときのやり直しが1回までであること |
 | 保存 | 暗号化して読み戻せること、別の鍵や別のファイルの暗号文を壊れたデータとして扱うこと |
+| 活動の要約 | もとにする数値の計算（連続日数、曜日、言語など）、出力の確認（渡していない数値、日本語でない、途中で切れた）、モデルの状態とダウンロード、押したときだけ作ること、失敗の種類ごとの表示、中止 |
 | 表示用の処理 | 数値の短縮表示（`24.1k` など）、相対時間、草のマスの大きさ・月のラベルの位置・TalkBack での選択の移動 |
 
 ## 今後の改善

@@ -76,6 +76,10 @@
     </button>
   </section>
 
+  <div style="{{summaryWrapStyle}}">
+    <dc-import name="Summary" layout="phone" state="{{summary}}" dark="{{dark}}" hint-size="358px,64px"></dc-import>
+  </div>
+
   <section style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 8px">
     <h3 style="margin: 0; padding: 0 0 4px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p)">アクティビティ</h3>
     <ul style="list-style: none; margin: 0; padding: 0; border-radius: 16px; background: var(--cl); overflow: hidden">
@@ -142,7 +146,7 @@
   </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"expanded":{"editor":"boolean","default":false},"contrib":{"editor":"enum","options":["data","selected","empty","loading","signedOut","error","hidden"],"default":"data"},"$preview":{"width":390,"height":2100}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"expanded":{"editor":"boolean","default":false},"contrib":{"editor":"enum","options":["data","selected","empty","loading","signedOut","error","hidden"],"default":"data"},"summary":{"editor":"enum","options":["entry","download","downloading","generating","done","stale","busy","quota","error","noData","hidden"],"default":"entry"},"$preview":{"width":390,"height":2190}}'>
 class Component extends DCLogic {
   renderVals() {
     var self = this;
@@ -167,9 +171,13 @@ class Component extends DCLogic {
     });
     var L = '--p:#6750A4;--op:#FFFFFF;--pc:#EADDFF;--opc:#21005D;--sc2:#E8DEF8;--osc2:#1D192B;--tc:#FFD8E4;--otc:#31111D;--s:#FEF7FF;--os:#1D1B20;--osv:#49454F;--ol:#79747E;--olv:#CAC4D0;--cl:#F7F2FA;--c:#F3EDF7;--ch:#ECE6F0;--chh:#E6E0E9;';
     var D = '--p:#D0BCFF;--op:#381E72;--pc:#4F378B;--opc:#EADDFF;--sc2:#4A4458;--osc2:#E8DEF8;--tc:#633B48;--otc:#FFD8E4;--s:#141218;--os:#E6E0E9;--osv:#CAC4D0;--ol:#938F99;--olv:#49454F;--cl:#1D1B20;--c:#211F26;--ch:#2B2930;--chh:#36343B;';
-    var rootStyle = (this.props.dark ? D : L) + ' width: 390px; height: 2100px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--s); color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif; overflow: hidden';
+    var summary = this.props.summary || 'entry';
+    var extra = { hidden: 0, entry: 90, noData: 90, download: 170, downloading: 160, generating: 180, done: 360, stale: 440, busy: 120, quota: 120, error: 120 }[summary] || 0;
+    var rootStyle = (this.props.dark ? D : L) + ' width: 390px; height: ' + (2100 + extra) + 'px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--s); color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif; overflow: hidden';
     return {
       contrib: this.props.contrib || 'data',
+      summary: summary,
+      summaryWrapStyle: summary === 'hidden' ? 'display: none' : 'padding: 16px 16px 0',
       dark: !!this.props.dark,
       popular: popular,
       repos: repos,

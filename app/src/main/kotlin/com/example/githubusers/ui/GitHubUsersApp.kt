@@ -127,6 +127,7 @@ fun GitHubUsersApp(
                         isTwoPane = isTwoPane,
                         onBack = { backStack.removeLastOrNull() },
                         onSignInClick = openSignIn,
+                        onShowSnackbar = onShowSnackbar,
                     )
                     signInEntry(
                         useDialog = useSignInDialog,

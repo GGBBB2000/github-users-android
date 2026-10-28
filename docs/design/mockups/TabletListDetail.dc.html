@@ -68,6 +68,10 @@ body{margin:0}
       <div style="border-radius: 16px; background: var(--s); padding: 16px 20px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; line-height: 16px; color: var(--osv)">公開 Gist</span><span style="font-size: 28px; line-height: 36px; font-weight: 500">62</span></div>
     </section>
 
+    <sc-if value="{{showSummary}}" hint-placeholder-val="{{ true }}">
+      <dc-import name="Summary" layout="tablet" state="{{summary}}" dark="{{dark}}" hint-size="744px,340px"></dc-import>
+    </sc-if>
+
     <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
       <section style="display: flex; flex-direction: column; gap: 8px">
         <h3 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p)">プロフィール</h3>
@@ -144,7 +148,7 @@ body{margin:0}
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"selected":{"editor":"boolean","default":true},"contrib":{"editor":"enum","options":["data","selected","empty","loading","signedOut","error","hidden"],"default":"data"},"$preview":{"width":1280,"height":1690}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"selected":{"editor":"boolean","default":true},"contrib":{"editor":"enum","options":["data","selected","empty","loading","signedOut","error","hidden"],"default":"data"},"summary":{"editor":"enum","options":["entry","download","downloading","generating","done","stale","busy","quota","error","noData","hidden"],"default":"done"},"$preview":{"width":1280,"height":2060}}'>
 class Component extends DCLogic {
   renderVals() {
     var selected = this.props.selected ?? true;
@@ -179,13 +183,17 @@ class Component extends DCLogic {
       r.rowStyle = i === 0 ? '' : 'border-top: 1px solid var(--chh)';
       return r;
     });
-    var h = selected ? 1690 : 800;
+    var summary = this.props.summary || 'done';
+    var extra = { hidden: 0, entry: 90, noData: 90, download: 110, downloading: 140, generating: 170, done: 370, stale: 400, busy: 110, quota: 110, error: 110 }[summary] || 0;
+    var h = selected ? 1690 + extra : 800;
     return {
       users: users,
       popular: popular,
       repos: repos,
       selected: selected,
       contrib: this.props.contrib || 'data',
+      summary: summary,
+      showSummary: summary !== 'hidden',
       dark: !!this.props.dark,
       rootStyle: (this.props.dark ? '--p:#D0BCFF;--op:#381E72;--pc:#4F378B;--opc:#EADDFF;--sc2:#4A4458;--osc2:#E8DEF8;--tc:#633B48;--otc:#FFD8E4;--s:#141218;--os:#E6E0E9;--osv:#CAC4D0;--ol:#938F99;--olv:#49454F;--cl:#1D1B20;--c:#211F26;--ch:#2B2930;--chh:#36343B;' : '--p:#6750A4;--op:#FFFFFF;--pc:#EADDFF;--opc:#21005D;--sc2:#E8DEF8;--osc2:#1D192B;--tc:#FFD8E4;--otc:#31111D;--s:#FEF7FF;--os:#1D1B20;--osv:#49454F;--ol:#79747E;--olv:#CAC4D0;--cl:#F7F2FA;--c:#F3EDF7;--ch:#ECE6F0;--chh:#E6E0E9;') + ' width: 1280px; height: ' + h + 'px; box-sizing: border-box; display: flex; gap: 24px; padding: 0 24px 24px; background: var(--s); color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif; overflow: hidden'
     };

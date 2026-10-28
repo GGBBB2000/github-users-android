@@ -2,13 +2,16 @@ package com.example.githubusers.feature.userdetail
 
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.githubusers.core.model.Repo
 import com.example.githubusers.core.model.RepoSort
+import com.example.githubusers.core.ui.ShowSnackbar
 import com.example.githubusers.core.ui.rememberExternalActions
 
 /**
@@ -20,6 +23,7 @@ import com.example.githubusers.core.ui.rememberExternalActions
  * @param isTwoPane 2ペイン表示か
  * @param onBack 1ペイン表示で戻るボタンを押したとき
  * @param onSignInClick レート制限の表示でサインインを押したとき
+ * @param onShowSnackbar 要約を作り直せなかったときに使う
  */
 @Composable
 fun UserDetailScreen(
@@ -27,6 +31,7 @@ fun UserDetailScreen(
     isTwoPane: Boolean,
     onBack: () -> Unit,
     onSignInClick: () -> Unit,
+    onShowSnackbar: ShowSnackbar,
     modifier: Modifier = Modifier,
 ) {
     // 画面（NavEntry）ごとに ViewModel を持つので、画面を閉じると ViewModel も破棄される
@@ -45,7 +50,26 @@ fun UserDetailScreen(
         onRetryContributions = viewModel::retryContributions,
         onOpenUrl = externalActions::openUrl,
         onShare = externalActions::shareText,
+        summary = SummaryCallbacks(
+            onGenerate = viewModel::generateSummary,
+            onCancel = viewModel::cancelSummary,
+            onDownload = viewModel::downloadSummaryModel,
+        ),
     )
+    val busyMessage = stringResource(R.string.feature_userdetail_summary_snackbar_busy)
+    val quotaMessage = stringResource(R.string.feature_userdetail_summary_quota)
+    val failedMessage = stringResource(R.string.feature_userdetail_summary_failed)
+    LaunchedEffect(viewModel) {
+        // 要約がある状態で作り直せなかったときは、要約を残して Snackbar で伝える
+        viewModel.summaryMessages.collect { reason ->
+            val message = when (reason) {
+                SummaryFailure.Busy -> busyMessage
+                SummaryFailure.QuotaExceeded -> quotaMessage
+                SummaryFailure.Other -> failedMessage
+            }
+            onShowSnackbar(message, null)
+        }
+    }
     BoxWithConstraints(modifier) {
         if (isTwoPane && maxWidth >= ExpandedLayoutMinWidth) {
             ExpandedUserDetail(uiState, callbacks, externalActions)
@@ -68,6 +92,7 @@ internal data class UserDetailCallbacks(
     val onRetryContributions: () -> Unit,
     val onOpenUrl: (String) -> Unit,
     val onShare: (text: String, title: String) -> Unit,
+    val summary: SummaryCallbacks,
 ) {
     fun openRepo(repo: Repo) = onOpenUrl(repo.htmlUrl)
 }

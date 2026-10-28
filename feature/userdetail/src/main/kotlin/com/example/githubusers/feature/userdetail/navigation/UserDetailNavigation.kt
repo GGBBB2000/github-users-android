@@ -4,6 +4,7 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import com.example.githubusers.core.ui.ShowSnackbar
 import com.example.githubusers.feature.userdetail.UserDetailScreen
 import kotlinx.serialization.Serializable
 
@@ -16,12 +17,14 @@ data class UserDetailNavKey(val login: String) : NavKey
  *
  * @param isTwoPane 2ペイン表示か
  * @param onSignInClick レート制限の表示でサインインを押したとき
+ * @param onShowSnackbar アプリ全体の Snackbar に表示する
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.userDetailEntry(
     isTwoPane: Boolean,
     onBack: () -> Unit,
     onSignInClick: () -> Unit,
+    onShowSnackbar: ShowSnackbar,
 ) {
     entry<UserDetailNavKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
         UserDetailScreen(
@@ -29,6 +32,7 @@ fun EntryProviderScope<NavKey>.userDetailEntry(
             isTwoPane = isTwoPane,
             onBack = onBack,
             onSignInClick = onSignInClick,
+            onShowSnackbar = onShowSnackbar,
         )
     }
 }

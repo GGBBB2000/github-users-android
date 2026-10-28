@@ -123,6 +123,17 @@ private fun LazyListScope.compactContent(
     item(key = "profile") {
         ProfileCard(user, externalActions, Modifier.padding(horizontal = 16.dp))
     }
+    // 要約はプロフィール・草・リポジトリをまとめたものなので、各セクションより上に置く
+    if (uiState.summary != SummaryState.Hidden) {
+        item(key = "summary") {
+            SummarySection(
+                state = uiState.summary,
+                isTablet = false,
+                callbacks = callbacks.summary,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+            )
+        }
+    }
     item(key = "activity") {
         Column(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp),

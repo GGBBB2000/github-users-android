@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>要約の状態パターン</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <sc-for list="{{panels}}" as="p" hint-placeholder-count="11">
+    <section aria-label="{{p.title}}" style="{{p.style}}">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 500; color: var(--osv)">{{p.title}}</span>
+      <dc-import name="Summary" layout="phone" state="{{p.state}}" values-open="{{p.open}}" dark="{{dark}}" hint-size="358px,200px"></dc-import>
+    </section>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":2580,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var dark = !!this.props.dark;
+    var list = [
+      ['entry', '生成前の入口', false, 1],
+      ['generating', '生成中', false, 1],
+      ['done', '生成できた', false, 1],
+      ['done', '生成できた・数値を開いた', true, 1],
+      ['stale', '未ログインで作った後にサインイン', false, 1],
+      ['download', 'モデルのダウンロードが必要', false, 2],
+      ['downloading', 'モデルをダウンロード中', false, 2],
+      ['busy', '失敗：混み合っている', false, 2],
+      ['quota', '失敗：今日の上限', false, 2],
+      ['error', '失敗：そのほか', false, 2],
+      ['noData', 'データが少ない', false, 2]
+    ];
+    var col = { 1: 0, 2: 0 };
+    var panels = list.map(function (x) {
+      col[x[3]]++;
+      return {
+        state: x[0], title: x[1], open: x[2],
+        style: 'grid-row: ' + x[3] + '; grid-column: ' + col[x[3]] + '; box-sizing: border-box; padding: 16px; border-radius: 16px; background: var(--s); display: flex; flex-direction: column; gap: 8px; align-self: start'
+      };
+    });
+    var L = '--s:#FEF7FF;--os:#1D1B20;--osv:#49454F;';
+    var D = '--s:#141218;--os:#E6E0E9;--osv:#CAC4D0;';
+    return {
+      dark: dark,
+      panels: panels,
+      rootStyle: (dark ? D : L) + ' width: 2580px; height: 1100px; display: grid; grid-template-columns: repeat(6, 390px); grid-template-rows: auto auto; gap: 48px; align-content: start; color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -30,6 +30,7 @@ GitHub の User API を使ってユーザーの一覧と詳細を表示する An
 - 画像：Coil 3（`rememberAsyncImagePainter` + `Image`）
 - ブラウザ：androidx.browser（Custom Tabs）
 - 認証：GitHub App の Device Flow。トークンは DataStore と Tink（`datastore-tink`）で暗号化して保存
+- 端末上の AI：ML Kit GenAI の Prompt API（Gemini Nano）。活動の要約に使う。数値はアプリで計算し、AI には文章にすることだけを任せる
 - テスト：JUnit 4、kotlinx-coroutines-test、Turbine、MockWebServer
 - ビルド：AGP 9（Kotlin は AGP に組み込みのものを使う）、Gradle のバージョンカタログ、`build-logic` の共通設定
 - `compileSdk` / `targetSdk` 37、`minSdk` 26
@@ -45,12 +46,13 @@ GitHub の User API を使ってユーザーの一覧と詳細を表示する An
 ./gradlew :app:assembleDebug        # デバッグ版の APK を作る
 ./gradlew testDebugUnitTest         # すべての単体テスト
 ./gradlew :app:assembleRelease      # R8 で縮小した release 版（署名なし）
+./gradlew :app:assembleDebug -Pgithubusers.demoOnDeviceAi=true  # 端末上の AI をデモに差し替える（エミュレーター用）
 ```
 
 ## ディレクトリ
 
 - `app/` … アプリ本体（一覧・詳細・サインインの組み立て）
-- `core/` … 共通モジュール（model / network / data / datastore / designsystem / ui / testing）
+- `core/` … 共通モジュール（model / network / data / datastore / ai / designsystem / ui / testing）
 - `feature/` … 画面ごとの機能モジュール（userlist / userdetail / signin）
 - `build-logic/` … Gradle の共通設定（convention plugin）
 - `docs/design/` … デザイン仕様とモックアップ

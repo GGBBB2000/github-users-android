@@ -57,8 +57,84 @@ API：`GET /users/{login}`、`GET /users/{login}/repos`
 `surfaceContainer` の背景、角丸24dp、余白32dp。
 - ヘッダー：アバター 104dp、name（headlineMedium）、@login、ラベル類、右端に FilledButton「GitHub で開く」
 - 統計は4枚のカード（`surface` の背景、角丸16dp）
+- 統計の下に「活動の要約」を全幅で置く（対応端末のみ）
 - プロフィールとアクティビティは2列のグリッドで**常に表示**（開閉しない）
 - （検討中）上部もスマホと同じカード形式に揃え、最初から展開した状態にする
+
+### 活動の要約（端末上の AI）
+
+そのユーザーの活動を、端末上の AI（Gemini Nano、ML Kit GenAI の Prompt API）で2〜3文にまとめる。通信も費用もかからず、サーバーには何も送らない。
+
+#### 前提
+- **対応していない端末では、要約に関する表示を一切出さない**。判定は端末名で決めず、`checkStatus()` の結果で行う（`UNAVAILABLE` なら非表示）。判定が終わるまでも出さない
+- **数値は AI に作らせない**。下の「もとにした数値」はアプリで計算し、AI には「この値だけを使って文章にする」ことだけを任せる
+- **生成はユーザーが押したときだけ**。詳細を開いても自動では作らない
+- 作った要約は、アプリのプロセスが続く間、`login` ごとにメモリーに覚えておく（アプリ全体で1つのキャッシュ。詳細の ViewModel ではなく Repository に置く）。同じユーザーを開き直したら、押さなくても出す
+
+#### 置き場所
+- スマホ：**プロフィールカードのすぐ下**（間隔 16dp、左右 16dp）。要約はプロフィール・草・リポジトリをまとめた内容なので、それぞれのセクションより上に「全体のまとめ」として置く。生成前は1行の入口だけなので場所を取らない
+- タブレット：統計の4枚のカードの下に、**全幅の行**として置く（2列のグリッドの上）
+- 横向きのスマホ（詳細ペインが狭い）はスマホと同じ表示
+- カード：スマホは `surfaceContainerLow`、タブレットは `surface`（ほかのカードと同じ）。角丸16dp、余白16dp（入口だけのときは上下12dp）
+
+#### 生成前の入口
+- 1行：AI のアイコン（Material Symbols の `auto_awesome`、24dp、primary）、「このユーザーの活動を、端末上の AI で短い文章にまとめられます」（bodyMedium）、右端に FilledTonalButton「要約を作る」
+- AI のアイコンは、入口と要約の見出しの2か所だけに使う。AI が作った内容があることの目印にする
+
+#### 生成できたとき
+上から（間隔 12dp）：
+1. 見出し：`auto_awesome`（20dp、primary）＋「AI による要約」（titleSmall、primary）
+2. 文章：**bodyLarge**（onSurface）。まとまった文章として読むものなので、ほかの補助テキストより大きくする
+3. もとにした数値（文章と食い違っていないかを確かめるため）
+   - スマホ：TextButton「もとにした数値（11）」とシェブロン。押すと開く（初期は閉じる。`rememberSaveable`）。開くと `surface` の背景・角丸12dp のリストで、各行は左にラベル（bodySmall、onSurfaceVariant）、右に値（bodyMedium、Medium）、高さ 40dp、行の間に区切り線
+   - タブレット：常に表示。`outlineVariant` の区切り線の下に4列のグリッド（ラベル bodySmall／値 bodyMedium Medium）
+   - 取れなかった値（未ログインで草がないなど）は行ごと出さない。件数の表示もその数にする
+4. 下の行：左に注記「端末上の AI が作成した文章です。内容が正しくない場合があります。数値はアプリで計算しています」（labelSmall、onSurfaceVariant）、右に TextButton「もう一度作る」（更新アイコン付き）。回数の上限があるので FilledButton にはしない
+
+- **ストリーミングはしない**。出来上がってから一度に表示する。理由：(1) 下の「数値の確認」を通ってから出したい、(2) 2〜3文なら待ち時間は数秒〜十数秒で、途中の文章を読む意味が小さい、(3) TalkBack の読み上げが1回で済む
+
+#### 生成中
+- 見出しの行の右端に TextButton「中止」
+- 文章の場所に3本のスケルトン（`surfaceContainerHighest`、高さ 14dp、角丸7dp、最後の1本は幅 62%）
+- 下に小さい CircularProgressIndicator（16dp）と「端末上の AI で作成中です（10 秒ほどかかります）」（bodySmall、onSurfaceVariant）
+- 詳細から離れたら中止する（AI はアプリが前面にあるときしか動かない。裏に回ると `BACKGROUND_USE_BLOCKED` になる）
+
+#### AI への頼み方と、結果の確認
+- 渡すのは「もとにした数値」の表だけ。プロンプトで「この値以外の数値・事実を書かない」「日本語で2〜3文」「箇条書きや記号を使わない」と指示する。`temperature` は低め（0.2 前後）、`maxOutputTokens` で長さの上限を決める
+- 生成後、文章の中の数字（`1,269`、`2026年5月` などの数）が、すべて渡した値の中にあるかをアプリで確かめる。ない数字があれば表示せず「要約を作れませんでした」にする（自動では作り直さない。回数の上限があるため）
+- 値どうしを勝手に結びつけた文（例：「最も多かった月」と「最長の連続」は別々の値なのに「9月に23日連続」と書く）は機械では見つけにくい。そのため数値の一覧を必ず画面に出し、注記を付ける
+
+#### 状態ごとの表示
+
+| 状態（ML Kit） | 表示 |
+|---|---|
+| 端末が対応していない（`UNAVAILABLE`） | 何も出さない |
+| モデルがない（`DOWNLOADABLE`） | 入口の文言を「要約には AI のモデルのダウンロードが必要です」、補足「数百 MB 以上あります。Wi-Fi への接続をおすすめします」（bodySmall）、ボタン「ダウンロード」。スマホでは文の下にボタンを右寄せ |
+| ダウンロード中（`DOWNLOADING`） | 「AI のモデルをダウンロード中」と、ダウンロード済みの量（bodySmall）、LinearProgressIndicator（全体の量が分かれば進み具合、分からなければ不確定）、「ほかの画面に移っても続きます。終わったら『要約を作る』を押せるようになります」。ダウンロードはアプリ全体で管理し、終わっても自動では生成しない |
+| ダウンロードに失敗 | 「AI のモデルをダウンロードできませんでした」と「再試行」 |
+| 生成中 | 上の「生成中」 |
+| 生成できた | 上の「生成できた」 |
+| 混み合っている（`BUSY`） | 見出しの下に、時計のアイコン、「混み合っています」、補足「しばらくしてから、もう一度お試しください」、TextButton「再試行」 |
+| 今日の上限（`PER_APP_BATTERY_USE_QUOTA_EXCEEDED`） | 情報のアイコン、「今日はこれ以上要約を作れません」、補足「端末の電池の使用量の上限に達しました。明日以降にお試しください」。**再試行は出さない**。すでに要約がある状態で「もう一度作る」がこれになったときは、要約は残して Snackbar で伝える |
+| そのほかの失敗・数値の確認に通らない | `error` 色のアイコン、「要約を作れませんでした」、TextButton「再試行」。画面全体のエラーにはしない |
+| 未ログイン（草がない） | **草なしで、プロフィールとリポジトリだけで要約する**。サインインは草のセクションですでに勧めているので、ここでは重ねて勧めない |
+| Organization / Bot | 未ログインと同じく、プロフィールとリポジトリだけで要約する |
+| データが少ない | 入口の位置に「要約できるほどの活動がありません」（アイコンは onSurfaceVariant）、ボタンなし。目安：公開リポジトリが 0 件で、かつ過去1年間のコントリビューションが 10 件未満（草が取れないときはリポジトリ 0 件だけで判断） |
+
+#### 中身が変わったとき
+- 未ログインで要約を作った後にサインインして草が取れるようになったら、要約は**そのまま残し**、注記の上に `secondaryContainer` の帯で「サインインしたので、コントリビューションの情報も含めて作り直せます」と TextButton「作り直す」を出す（自動では作り直さない）
+- サインアウトしても、作った要約は消さない
+
+#### アクセシビリティ
+- 見出し「AI による要約」は `heading()`
+- 文章の読み上げは「AI が作成した要約：」で始める（`contentDescription`）。AI が作ったことが音声でも分かるようにする
+- 完了は、文章のノードを `liveRegion = LiveRegionMode.Polite` にして伝える。ストリーミングしないので、読み上げは1回だけ
+- 生成中の「端末上の AI で作成中です」も `liveRegion = Polite`
+- 数値は文章とは別に読む。各行はラベルと値を1つにまとめる（`mergeDescendants`。例「よく活動する曜日、木曜日」）。開閉ボタンは展開状態を持つ
+
+#### 注意（実装前に確かめること）
+- 対応端末と、Prompt API が**日本語の文章をどこまで正しく作れるか**は公式の資料に一覧がない。実機で確かめ、日本語で返ってこないときは「そのほかの失敗」として扱う
+- ブートローダーをアンロックした端末では使えない。端末の初期化の直後なども、しばらく使えないことがある
 
 ### アクティビティ
 セクション見出し（labelLarge、primary 色）＋リスト。
@@ -240,15 +316,19 @@ GitHub の Device Flow でサインインする。
 | ファイル | 内容 | 本体 |
 |---|---|---|
 | `Main.dc.html` | スマホ / ユーザー一覧（`overlay` でメニュー・ダイアログ・Snackbar を重ねる） | — |
-| `PhoneDetail.dc.html` | スマホ / 詳細（プロフィール折りたたみ。`contrib` で草の状態を切り替え） | — |
+| `PhoneDetail.dc.html` | スマホ / 詳細（プロフィール折りたたみ・要約の入口。`contrib` で草、`summary` で要約の状態を切り替え） | — |
 | `PhoneDetailExpanded.dc.html` | スマホ / 詳細（プロフィール展開） | PhoneDetail |
-| `TabletListDetail.dc.html` | タブレット / リスト＋詳細（`selected=false` で未選択、`contrib` で草の状態を切り替え） | — |
+| `TabletListDetail.dc.html` | タブレット / リスト＋詳細（要約あり。`selected=false` で未選択、`contrib` で草、`summary` で要約の状態を切り替え） | — |
 | `TabletEmpty.dc.html` | タブレット / 未選択 | TabletListDetail |
-| `DarkMain.dc.html` ほか `Dark*.dc.html` | 上記のダーク版 | 各本体 |
+| `DarkMain.dc.html` ほか `Dark*.dc.html` | 上記のダーク版（`DarkPhoneDetail` は要約を作った後） | 各本体 |
 | `States.dc.html` | 状態パターン（初回読み込み・エラー・追加読み込み失敗・初回のレート制限） | — |
 | `Contribution.dc.html` | 草の部品（`state`：data／selected／empty／loading／signedOut／error／hidden、`layout`：phone／tablet、`dark`）。詳細の画面はこれを読み込む | — |
 | `ContributionStates.dc.html` | 草の状態の一覧（スマホ幅） | Contribution |
 | `DarkContributionStates.dc.html` | 上記のダーク版 | ContributionStates |
+| `Summary.dc.html` | 要約の部品（`state`：entry／download／downloading／generating／done／stale／busy／quota／error／noData／hidden、`layout`：phone／tablet、`valuesOpen`、`dark`）。詳細の画面はこれを読み込む | — |
+| `SummaryStates.dc.html` | 要約の状態の一覧（スマホ幅） | Summary |
+| `DarkSummaryStates.dc.html` | 上記のダーク版 | SummaryStates |
+| `PhoneDetailSummary.dc.html` | スマホ / 詳細（要約を作った後） | PhoneDetail |
 | `SignIn.dc.html` | サインイン / 許可待ち（`state`、`layout`：screen／dialog、`dark`） | — |
 | `SignInLoading` / `SignInExpired` / `SignInDenied` / `SignInError` / `SignInDark.dc.html` | サインインの各状態 | SignIn |
 | `SignInTablet.dc.html` | サインイン / ダイアログ（600dp 以上） | SignIn |

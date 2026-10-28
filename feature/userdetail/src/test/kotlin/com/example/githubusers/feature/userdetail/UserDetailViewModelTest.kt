@@ -3,6 +3,7 @@ package com.example.githubusers.feature.userdetail
 import com.example.githubusers.core.model.GitHubException
 import com.example.githubusers.core.model.RepoSort
 import com.example.githubusers.core.model.AccountType
+import com.example.githubusers.core.testing.FakeActivitySummaryRepository
 import com.example.githubusers.core.testing.FakeAuthRepository
 import com.example.githubusers.core.testing.FakeContributionRepository
 import com.example.githubusers.core.testing.FakeRepoRepository
@@ -30,9 +31,16 @@ class UserDetailViewModelTest {
 
     private val authRepository = FakeAuthRepository()
     private val contributionRepository = FakeContributionRepository()
+    private val summaryRepository = FakeActivitySummaryRepository()
 
-    private fun createViewModel() =
-        UserDetailViewModel("mojombo", userRepository, repoRepository, contributionRepository, authRepository)
+    private fun createViewModel() = UserDetailViewModel(
+        "mojombo",
+        userRepository,
+        repoRepository,
+        contributionRepository,
+        authRepository,
+        summaryRepository,
+    )
 
     @Test
     fun `プロフィール・人気のリポジトリ・リポジトリ一覧を読み込む`() = runTest {

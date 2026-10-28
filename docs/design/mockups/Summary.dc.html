@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>活動の要約（端末上の AI）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}@keyframes dcspin{to{transform:rotate(360deg)}}</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <section aria-label="AI による要約" style="{{cardStyle}}">
+
+    <!-- 入口・ダウンロード・データ不足：1行の小さい表示 -->
+    <sc-if value="{{compact}}" hint-placeholder-val="{{ true }}">
+      <div style="{{compactRowStyle}}">
+        <div style="display: flex; gap: 12px; align-items: flex-start; flex-grow: 1; min-width: 0">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="{{iconStyle}}"><path d="M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9z"></path><path d="M18 13l.9 2.1L21 16l-2.1.9L18 19l-.9-2.1L15 16l2.1-.9z"></path><path d="M18 2l.7 1.3L20 4l-1.3.7L18 6l-.7-1.3L16 4l1.3-.7z"></path></svg>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 2px">
+            <p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--os)">{{compactText}}</p>
+            <sc-if value="{{compactSub}}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 0; font-size: 12px; line-height: 16px; color: var(--osv)">{{compactSub}}</p>
+            </sc-if>
+          </div>
+        </div>
+        <sc-if value="{{compactButton}}" hint-placeholder-val="{{ true }}">
+          <button style="{{compactButtonStyle}}">{{compactButton}}</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ダウンロード中 -->
+    <sc-if value="{{downloading}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 12px; align-items: center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--p); flex-shrink: 0"><path d="M12 4v11"></path><path d="M7 10l5 5 5-5"></path><path d="M5 20h14"></path></svg>
+          <p style="margin: 0; flex-grow: 1; font-size: 14px; line-height: 20px">AI のモデルをダウンロード中</p>
+          <span style="font-size: 12px; line-height: 16px; color: var(--osv)">412 MB</span>
+        </div>
+        <div role="progressbar" aria-label="AI のモデルのダウンロード" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100" style="height: 4px; display: flex; gap: 4px; margin-left: 36px">
+          <div style="width: 58%; border-radius: 2px; background: var(--p)"></div>
+          <div style="flex-grow: 1; border-radius: 2px; background: var(--sc2)"></div>
+        </div>
+        <p style="margin: 0 0 0 36px; font-size: 12px; line-height: 16px; color: var(--osv)">ほかの画面に移っても続きます。終わったら「要約を作る」を押せるようになります</p>
+      </div>
+    </sc-if>
+
+    <!-- 見出し（生成中・生成後・失敗） -->
+    <sc-if value="{{showHeader}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; align-items: center; gap: 8px; min-height: 24px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="color: var(--p); flex-shrink: 0"><path d="M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9z"></path><path d="M18 13l.9 2.1L21 16l-2.1.9L18 19l-.9-2.1L15 16l2.1-.9z"></path><path d="M18 2l.7 1.3L20 4l-1.3.7L18 6l-.7-1.3L16 4l1.3-.7z"></path></svg>
+        <h3 style="margin: 0; flex-grow: 1; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--p)">AI による要約</h3>
+        <sc-if value="{{generating}}" hint-placeholder-val="{{ false }}">
+          <button style="height: 32px; margin: -4px -8px -4px 0; padding: 0 12px; border: 0; border-radius: 16px; background: transparent; color: var(--p); font: inherit; font-size: 14px; font-weight: 500">中止</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- 生成中 -->
+    <sc-if value="{{generating}}" hint-placeholder-val="{{ false }}">
+      <div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding: 3px 0">
+        <div style="height: 14px; border-radius: 7px; background: var(--chh)"></div>
+        <div style="height: 14px; border-radius: 7px; background: var(--chh)"></div>
+        <div style="height: 14px; width: 62%; border-radius: 7px; background: var(--chh)"></div>
+      </div>
+      <div role="status" style="display: flex; align-items: center; gap: 8px">
+        <div style="width: 16px; height: 16px; box-sizing: border-box; border-radius: 8px; border: 2px solid var(--sc2); border-top-color: var(--p); animation: dcspin 1s linear infinite; flex-shrink: 0"></div>
+        <span style="font-size: 12px; line-height: 16px; color: var(--osv)">端末上の AI で作成中です（10 秒ほどかかります）</span>
+      </div>
+    </sc-if>
+
+    <!-- 生成できた -->
+    <sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+      <p aria-live="polite" aria-label="{{textLabel}}" style="margin: 0; font-size: 16px; line-height: 24px; color: var(--os)">{{text}}</p>
+
+      <sc-if value="{{phone}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <button aria-expanded="{{valuesOpenText}}" onClick="{{toggleValues}}" style="align-self: flex-start; height: 40px; margin: -4px 0 -4px -12px; padding: 0 12px; border: 0; border-radius: 20px; background: transparent; color: var(--p); font: inherit; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 4px; cursor: pointer">
+            <span>もとにした数値（{{valueCount}}）</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{chevronStyle}}"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          <sc-if value="{{valuesOpen}}" hint-placeholder-val="{{ false }}">
+            <dl style="margin: 0; border-radius: 12px; background: var(--s); overflow: hidden">
+              <sc-for list="{{values}}" as="v" hint-placeholder-count="11">
+                <div style="{{v.rowStyle}}">
+                  <dt style="font-size: 12px; line-height: 16px; color: var(--osv); flex-shrink: 0">{{v.k}}</dt>
+                  <dd style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500; text-align: right">{{v.v}}</dd>
+                </div>
+              </sc-for>
+            </dl>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{tablet}}" hint-placeholder-val="{{ false }}">
+        <dl aria-label="もとにした数値" style="margin: 0; padding-top: 16px; border-top: 1px solid var(--olv); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 16px">
+          <sc-for list="{{values}}" as="v" hint-placeholder-count="11">
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+              <dt style="font-size: 12px; line-height: 16px; color: var(--osv)">{{v.k}}</dt>
+              <dd style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 500">{{v.v}}</dd>
+            </div>
+          </sc-for>
+        </dl>
+      </sc-if>
+
+      <sc-if value="{{stale}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 16px; border-radius: 12px; background: var(--sc2); color: var(--osc2)">
+          <p style="margin: 0; flex-grow: 1; font-size: 12px; line-height: 16px; padding: 8px 0">サインインしたので、コントリビューションの情報も含めて作り直せます</p>
+          <button style="height: 40px; padding: 0 12px; border: 0; border-radius: 20px; background: transparent; color: var(--p); font: inherit; font-size: 14px; font-weight: 500; flex-shrink: 0">作り直す</button>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; align-items: flex-end; gap: 8px">
+        <p style="margin: 0; flex-grow: 1; font-size: 11px; line-height: 16px; font-weight: 500; color: var(--osv)">端末上の AI が作成した文章です。内容が正しくない場合があります。数値はアプリで計算しています</p>
+        <button aria-label="要約をもう一度作る" style="height: 40px; margin: 0 -12px -8px 0; padding: 0 12px; border: 0; border-radius: 20px; background: transparent; color: var(--p); font: inherit; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-shrink: 0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path></svg>
+          もう一度作る
+        </button>
+      </div>
+    </sc-if>
+
+    <!-- 失敗（混み合い・今日の上限・そのほか） -->
+    <sc-if value="{{failed}}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="display: flex; align-items: center; gap: 12px; min-height: 40px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{failIconStyle}}"><circle cx="12" cy="12" r="9"></circle><path d="{{failIconPath}}"></path></svg>
+        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+          <p style="margin: 0; font-size: 14px; line-height: 20px">{{failText}}</p>
+          <sc-if value="{{failSub}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 0; font-size: 12px; line-height: 16px; color: var(--osv)">{{failSub}}</p>
+          </sc-if>
+        </div>
+        <sc-if value="{{retry}}" hint-placeholder-val="{{ true }}">
+          <button style="height: 40px; padding: 0 12px; border: 0; border-radius: 20px; background: transparent; color: var(--p); font: inherit; font-size: 14px; font-weight: 500; flex-shrink: 0">再試行</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["entry","download","downloading","generating","done","stale","busy","quota","error","noData","hidden"],"default":"done"},"layout":{"editor":"enum","options":["phone","tablet"],"default":"phone"},"valuesOpen":{"editor":"boolean","default":false},"dark":{"editor":"boolean","default":false},"$preview":{"width":358,"height":340}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var st = this.props.state || 'done';
+    var tablet = this.props.layout === 'tablet';
+    var dark = !!this.props.dark;
+    var open = (this.state && this.state.open != null) ? this.state.open : !!this.props.valuesOpen;
+
+    // モックアップのデータ（草・リポジトリのダミー値と一致させてある）
+    var full = [
+      ['コントリビューション（過去1年間）', '1,269 件'],
+      ['活動した日', '247 日'],
+      ['最長の連続', '14 日'],
+      ['今の連続', '1 日'],
+      ['よく活動する曜日', '木曜日'],
+      ['最も多かった月', '2026年5月'],
+      ['よく使う言語', 'Ruby、JavaScript、C'],
+      ['スターが最も多いリポジトリ', 'chronic（★3.2k）'],
+      ['登録してから', '19 年'],
+      ['フォロワー', '24.1k'],
+      ['公開リポジトリ', '66']
+    ];
+    var noContrib = full.slice(6);
+    var stale = st === 'stale';
+    var rows = stale ? noContrib : full;
+    var text = stale
+      ? 'Ruby を中心に JavaScript や C を使い、最も人気のあるリポジトリは chronic です。GitHub に登録して 19 年になり、24.1k 人にフォローされています。'
+      : '過去1年間で 1,269 件のコントリビューションがあり、特に木曜日に活発です。Ruby を中心に JavaScript や C も使い、最も人気のあるリポジトリは chronic です。2026年5月が最も活動の多い月でした。';
+
+    var values = rows.map(function (r, i) {
+      return { k: r[0], v: r[1], rowStyle: 'min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 16px' + (i ? '; border-top: 1px solid var(--chh)' : '') };
+    });
+
+    var compact = st === 'entry' || st === 'download' || st === 'noData';
+    var compactText = { entry: 'このユーザーの活動を、端末上の AI で短い文章にまとめられます', download: '要約には AI のモデルのダウンロードが必要です', noData: '要約できるほどの活動がありません' }[st] || '';
+    var compactSub = { download: '数百 MB 以上あります。Wi-Fi への接続をおすすめします' }[st] || '';
+    var compactButton = { entry: '要約を作る', download: 'ダウンロード' }[st] || '';
+
+    var fails = {
+      busy: { text: '混み合っています', sub: 'しばらくしてから、もう一度お試しください', retry: true, icon: 'M12 7v5l3 2', color: 'var(--osv)' },
+      quota: { text: '今日はこれ以上要約を作れません', sub: '端末の電池の使用量の上限に達しました。明日以降にお試しください', retry: false, icon: 'M12 11v5.5M12 7.5v.5', color: 'var(--osv)' },
+      error: { text: '要約を作れませんでした', sub: '', retry: true, icon: 'M12 7.5v5.5M12 16.5v.5', color: 'var(--er)' }
+    };
+    var f = fails[st];
+
+    var L = '--p:#6750A4;--op:#FFFFFF;--pc:#EADDFF;--opc:#21005D;--sc2:#E8DEF8;--osc2:#1D192B;--s:#FEF7FF;--os:#1D1B20;--osv:#49454F;--ol:#79747E;--olv:#CAC4D0;--cl:#F7F2FA;--c:#F3EDF7;--ch:#ECE6F0;--chh:#E6E0E9;--er:#B3261E;';
+    var D = '--p:#D0BCFF;--op:#381E72;--pc:#4F378B;--opc:#EADDFF;--sc2:#4A4458;--osc2:#E8DEF8;--s:#141218;--os:#E6E0E9;--osv:#CAC4D0;--ol:#938F99;--olv:#49454F;--cl:#1D1B20;--c:#211F26;--ch:#2B2930;--chh:#36343B;--er:#F2B8B5;';
+    var width = tablet ? 744 : 358;
+    var cardBg = tablet ? 'var(--s)' : 'var(--cl)';
+
+    return {
+      rootStyle: (dark ? D : L) + ' width: ' + width + 'px; box-sizing: border-box; color: var(--os); font-family: Roboto, \'Noto Sans JP\', sans-serif',
+      cardStyle: (st === 'hidden' ? 'display: none; ' : '') + 'border-radius: 16px; background: ' + cardBg + '; padding: ' + (compact ? '12px 16px' : '16px') + '; display: flex; flex-direction: column; gap: 12px',
+      compact: compact,
+      compactRowStyle: 'display: flex; gap: 12px; ' + (tablet || st !== 'download' ? 'align-items: center' : 'flex-direction: column'),
+      iconStyle: 'flex-shrink: 0; color: ' + (st === 'noData' ? 'var(--osv)' : 'var(--p)'),
+      compactText: compactText,
+      compactSub: compactSub,
+      compactButton: compactButton,
+      compactButtonStyle: 'height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: var(--sc2); color: var(--osc2); font: inherit; font-size: 14px; font-weight: 500; flex-shrink: 0; white-space: nowrap; align-self: ' + (tablet || st !== 'download' ? 'center' : 'flex-end'),
+      downloading: st === 'downloading',
+      showHeader: st === 'generating' || st === 'done' || st === 'stale' || !!f,
+      generating: st === 'generating',
+      done: st === 'done' || stale,
+      stale: stale,
+      phone: !tablet,
+      tablet: tablet,
+      text: text,
+      textLabel: 'AI が作成した要約：' + text,
+      values: values,
+      valueCount: rows.length,
+      valuesOpen: open,
+      valuesOpenText: open ? 'true' : 'false',
+      chevronStyle: open ? 'transform: rotate(180deg)' : '',
+      toggleValues: function () { self.setState({ open: !open }); },
+      failed: !!f,
+      failText: f ? f.text : '',
+      failSub: f ? f.sub : '',
+      retry: f ? f.retry : false,
+      failIconPath: f ? f.icon : '',
+      failIconStyle: 'flex-shrink: 0; color: ' + (f ? f.color : 'var(--osv)')
+    };
+  }
+}
+</script>
+</body>
+</html>
